@@ -1,4 +1,4 @@
-from compression_nbs.cosiatec import *
+from nbs_compression.cosiatec import *
 import pynbs
 
 if __name__ == "__main__":

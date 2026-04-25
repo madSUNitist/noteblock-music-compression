@@ -11,7 +11,7 @@ pynbs >= 1.1.0
 ## Usage
 
 ```python
-from compression_nbs.cosiatec import cosiatec
+from nbs_compression.cosiatec import cosiatec
 import pynbs
 
 

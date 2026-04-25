@@ -1,53 +1,114 @@
 # Noteblock Music Compression
 
-用于压缩 Note Block Studio (.nbs) 音乐文件的工具，为在 Minecraft 中高效存储和播放多音轨音乐而设计
+为高效实现[@kemiamu](https://space.bilibili.com/3494363168508256) 的逻辑红石音乐而作。
+
+用于压缩 Note Block Studio (.nbs) 音乐文件的工具，以在 Minecraft 中高效存储和播放多音轨音乐。
+
+通过发现并压缩音乐中的重复模式，显著减小音符盒数量，让你在游戏内布局时可以轻松复用已有的音符盒结构，减少重复劳动，提升建造效率。
+
+## 算法简介
+
+### COSIATEC
+
+COSIATEC（Compression SIATEC）是一种基于贪心策略的无损压缩算法。它首先利用 SIATEC 找出当前音乐点集中所有可平移重复的模式（平移等价类 TEC），然后从中选择压缩比最高的一个，将其覆盖的音符从数据集中移除，并重复此过程直到所有音符都被编码。最终输出一系列不重叠的 TEC，每个 TEC 由一个基模式（pattern）和一组平移向量（translators）表示。该算法适合快速压缩，能有效识别明显的重复片段。
+
+### RecurSIA
+
+RecurSIA 在 COSIATEC 的基础上引入了递归思想。它会对每个 TEC 的基模式（pattern）再次递归地应用相同的压缩流程，从而发现嵌套在模式内部的子模式重复。这使得 RecurSIA 能够捕捉到更深层次的音乐结构（例如乐句中包含的小动机），从而获得比 COSIATEC 更高的压缩率。递归深度可通过 `min_pattern_size` 参数控制，以平衡压缩效果与计算开销。
 
 ## Requirements
 
 ```plaintext
-pynbs >= 1.1.0
+pynbs>=1.1.0
+matplotlib>=3.10.9
+numpy>=2.4.4
 ```
 
-## Usage
+## Quick Start
 
-### Prepare
+### 读取 `.nbs` 文件
 
 ```python
+from nbs_compression.sia_family.point import Point
+from nbs_compression.utils import notes_to_points
+
 import pynbs
 
+nbs_path = "your_song.nbs"
 
-nbs_file_path = 'path/to/your/nbs/file.nbs'
+# 1.1. Read `.nbs` file
+song = pynbs.read(nbs_path)
+raw_notes = [(tick, note.key, note.instrument) for tick, chord in song for note in chord] # Original note list: (tick, key, instrument)
 
-notes = []
-for tick, chord in pynbs.read(nbs_file_path):
-    for note in chord:
-        notes.append((tick, note.key))
+# 1.2. Convert into `Point`
+points = notes_to_points(raw_notes)
 ```
 
-### COSIATEC
+### 压缩
+#### COSIATEC
 
 ```python
-from nbs_compression.cosiatec import cosiatec
+from nbs_compression.sia_family.cosiatec import cosiatec
 
-tecs = cosiatec(notes, restrict_dpitch_zero=True)
-print("COSIATEC result:")
-for i, tec in enumerate(tecs):
-    print(f"TEC {i+1}: pattern={tec.pattern}, translators={tec.translators}")
-    print(f"  Coverage count: {len(tec.coverage)}")
-    print(f"  Compression ratio: {tec.compression_ratio:.3f}")
+# 2. Compress (COSIATEC)
+tecs = cosiatec(points, restrict_dpitch_zero=True)
 ```
 
-### RecurSIA
+#### RecurSIA
 
 ```python
 from nbs_compression.sia_family.recursia import recur_sia_cosiatec
 
-tecs = recur_sia_cosiatec(notes, restrict_dpitch_zero=True)
-print("RecurSIA result:")
+# 2. Compress (RecurSIA)
+tecs = recur_sia_cosiatec(points, restrict_dpitch_zero=True, min_pattern_size=2)
+```
+
+### 查看压缩结果
+
+```python
+# 3. Check results 
 for i, tec in enumerate(tecs):
     print(f"TEC {i+1}: pattern={tec.pattern}, translators={tec.translators}")
     print(f"  Coverage count: {len(tec.coverage)}")
     print(f"  Compression ratio: {tec.compression_ratio:.3f}")
+
+```
+
+### 可视化
+
+```python
+from nbs_compression.utils import visualize
+
+# 4. Visualize
+visualize(tecs)
+```
+
+### 重建并保存为新的 `.nbs` 文件
+
+```python
+from nbs_compression.utils import rebuild
+
+# 5. Rebuild & Write Back
+rebuilt_points = rebuild(tecs)
+
+new_file = pynbs.new_file(**song.header.__dict__)
+
+curr_tick, curr_layer = -1, 0
+for point in rebuilt_points:
+    tick, key = point.tick, point.key
+    for inst in point.inst_set:
+        # update curr_tick & curr_layer
+        if curr_tick != tick:
+            curr_tick, curr_layer = tick, 0
+        else:
+            curr_layer += 1
+        
+        # add note
+        new_file.notes.append(
+            pynbs.Note(tick, curr_layer, inst, key)
+        )
+
+new_file.save("your_song_compressed.nbs")
 ```
 
 ## Reference

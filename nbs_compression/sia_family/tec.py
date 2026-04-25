@@ -1,4 +1,5 @@
-from . import Point, Vector
+from .point import Point, Vector
+
 from typing import List, Set, Optional
 
 class TEC(object):
@@ -14,7 +15,7 @@ class TEC(object):
         cov = set(self.pattern)
         for v in self.translators:
             for p in self.pattern:
-                cov.add((p[0] + v[0], p[1] + v[1]))
+                cov.add(Point(p.tick + v[0], p.key + v[1], p.inst_set))
         return cov
 
     @property
@@ -31,14 +32,14 @@ class TEC(object):
         """Bounding-box compactness: |pattern| / (number of dataset points inside pattern's bbox)."""
         if not self.pattern:
             return 0.0
-        xs = [p[0] for p in self.pattern]
-        ys = [p[1] for p in self.pattern]
+        xs = [p.tick for p in self.pattern]
+        ys = [p.key for p in self.pattern]
         min_x, max_x = min(xs), max(xs)
         min_y, max_y = min(ys), max(ys)
         # count points in the dataset that fall inside this bounding box
         count = 0
         for p in points:
-            if min_x <= p[0] <= max_x and min_y <= p[1] <= max_y:
+            if min_x <= p.tick <= max_x and min_y <= p.key <= max_y:
                 count += 1
         if count == 0:
             return 0.0

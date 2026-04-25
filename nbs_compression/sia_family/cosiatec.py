@@ -1,5 +1,5 @@
-from . import Point
 from .tec import TEC
+from .point import Point
 from .siatec import siatec
 
 from typing import List, Tuple

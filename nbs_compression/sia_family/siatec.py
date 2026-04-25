@@ -45,7 +45,9 @@ def siatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TEC
         
         p0 = pattern[0]
         candidates = set()
-        for q in dataset:            
+        for q in dataset:
+            if q.instrument != p0.instrument: 
+                continue
             w = (q.tick - p0.tick, q.key - p0.key)
             candidates.add(w)
         

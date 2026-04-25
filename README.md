@@ -74,40 +74,13 @@ for i, tec in enumerate(tecs):
 
 ```
 
-### 可视化
-
-```python
-from nbs_compression.utils import visualize
-
-# 4. Visualize
-visualize(tecs)
-```
-
 ### 重建并保存为新的 `.nbs` 文件
 
 ```python
-from nbs_compression.utils import rebuild
+from nbs_compression.utils import tecs_to_nbs
 
-# 5. Rebuild & Write Back
-rebuilt_points = rebuild(tecs)
-
-new_file = pynbs.new_file(**song.header.__dict__)
-
-curr_tick, curr_layer = -1, 0
-for point in rebuilt_points:
-    tick, key, instrument = point.tick, point.key, point.instrument
-    
-    # Update curr_tick & curr_layer
-    if curr_tick != tick:
-        curr_tick, curr_layer = tick, 0
-    else:
-        curr_layer += 1
-        
-    # Add note
-    new_file.notes.append(
-        pynbs.Note(tick, curr_layer, instrument, key)
-    )
-
+# 4. Rebuild & Write Back
+new_file = tecs_to_nbs(tecs, song.header.__dict__)
 new_file.save("your_song_compressed.nbs")
 ```
 

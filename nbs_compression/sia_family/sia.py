@@ -19,6 +19,8 @@ def sia(dataset: List[Point], restrict_dpitch_zero: bool = False) -> Dict[Vector
         for j in range(n):
             if i == j:
                 continue
+            if points[i].instrument != points[j].instrument: 
+                continue
             v = (points[i].tick - points[j].tick, points[i].key - points[j].key)
             # filter non-zero dpitch
             if restrict_dpitch_zero and v[1] != 0:

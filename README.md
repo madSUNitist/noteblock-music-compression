@@ -74,6 +74,8 @@ for i, tec in enumerate(tecs):
 
 ### 重建并保存为新的 `.nbs` 文件
 
+压缩后得到的 `TEC` 列表可以重建为原始的 `.nbs` 文件。重建过程中，每个 `TEC` 会分配一个连续的层（layer）区间，区间大小取决于该 `TEC` 内同一 tick 上的最大音符并发数。每个 TEC 内部的音符按 tick 分组，同一 tick 上的不同乐器会被分配到该 TEC 层区间内的不同层上。所有音符按 tick 排序后写入文件，确保符合 NBS 格式要求。
+
 ```python
 from nbs_compression.utils import tecs_to_nbs
 

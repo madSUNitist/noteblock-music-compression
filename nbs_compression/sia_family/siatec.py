@@ -1,6 +1,6 @@
 from .sia import sia
 from .tec import TEC
-from .point import Point
+from . import Point
 
 from typing import List, Set
 
@@ -46,9 +46,7 @@ def siatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TEC
         p0 = pattern[0]
         candidates = set()
         for q in dataset:
-            if q.instrument != p0.instrument: 
-                continue
-            w = (q.tick - p0.tick, q.key - p0.key)
+            w = (q[0] - p0[0], q[1] - p0[1])
             candidates.add(w)
         
         translators = set()
@@ -61,7 +59,7 @@ def siatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TEC
 
             ok = True
             for p in pattern:
-                pp = Point(p.tick + w[0], p.key + w[1], p.instrument)
+                pp = (p[0] + w[0], p[1] + w[1])
                 if pp not in points:
                     ok = False
                     break
@@ -92,15 +90,15 @@ def is_better_tec(tec1: TEC, tec2: TEC, dataset_points: Set[Point]) -> bool:
     if len(tec1.pattern) != len(tec2.pattern):
         return len(tec1.pattern) > len(tec2.pattern)
     # temporal width (duration of pattern)
-    width1 = max(p.tick for p in tec1.pattern) - min(p.tick for p in tec1.pattern)
-    width2 = max(p.tick for p in tec2.pattern) - min(p.tick for p in tec2.pattern)
+    width1 = max(p[0] for p in tec1.pattern) - min(p[0] for p in tec1.pattern)
+    width2 = max(p[0] for p in tec2.pattern) - min(p[0] for p in tec2.pattern)
     if width1 != width2:
         return width1 < width2
     # bounding box area (tick_range * pitch_range)
-    x1 = max(p.tick for p in tec1.pattern) - min(p.tick for p in tec1.pattern)
-    y1 = max(p.key for p in tec1.pattern) - min(p.key for p in tec1.pattern)
+    x1 = max(p[0] for p in tec1.pattern) - min(p[0] for p in tec1.pattern)
+    y1 = max(p[1] for p in tec1.pattern) - min(p[1] for p in tec1.pattern)
     area1 = x1 * y1
-    x2 = max(p.tick for p in tec2.pattern) - min(p.tick for p in tec2.pattern)
-    y2 = max(p.key for p in tec2.pattern) - min(p.key for p in tec2.pattern)
+    x2 = max(p[0] for p in tec2.pattern) - min(p[0] for p in tec2.pattern)
+    y2 = max(p[1] for p in tec2.pattern) - min(p[1] for p in tec2.pattern)
     area2 = x2 * y2
     return area1 < area2

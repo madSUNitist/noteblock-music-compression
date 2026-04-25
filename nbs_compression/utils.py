@@ -1,4 +1,4 @@
-from .sia_family.point import Point
+from .sia_family import Point
 from .sia_family.tec import TEC
 
 from collections import defaultdict
@@ -8,8 +8,10 @@ import pynbs
 from typing import List
 
 
+N = 256
+
 def notes_to_points(notes):
-    return [Point(tick, key, instrument) for tick, key, instrument in notes]
+    return [(tick, key + instrument * N) for tick, key, instrument in notes]
 
 def tecs_to_nbs(tecs: List[TEC], header: dict) -> pynbs.File:
     """
@@ -26,7 +28,7 @@ def tecs_to_nbs(tecs: List[TEC], header: dict) -> pynbs.File:
             continue
         tick_counts = defaultdict(int)
         for p in coverage:
-            tick_counts[p.tick] += 1
+            tick_counts[p[0]] += 1   # p[0] is tick
         max_count = max(tick_counts.values())
         tec_concurrency.append(max_count)
 
@@ -43,16 +45,19 @@ def tecs_to_nbs(tecs: List[TEC], header: dict) -> pynbs.File:
         offset = layer_offsets[tec_idx]
         tick_groups = defaultdict(list)
         for p in tec.coverage:
-            tick_groups[p.tick].append(p)
+            tick_groups[p[0]].append(p)   # group by tick
         for tick, points in tick_groups.items():
-            points_sorted = sorted(points, key=lambda p: p.instrument)
-            for local_layer, p in enumerate(points_sorted):
+            # Sort points by encoded key to get deterministic layer assignment
+            points_sorted = sorted(points, key=lambda pt: pt[1])
+            for local_layer, pt in enumerate(points_sorted):
+                code = pt[1]
+                instrument, key = divmod(code, N)
                 layer = offset + local_layer
                 note = pynbs.Note(
                     tick=tick,
                     layer=layer,
-                    instrument=p.instrument,
-                    key=p.key,
+                    instrument=instrument,
+                    key=key,
                     velocity=100,
                     panning=0,
                     pitch=0

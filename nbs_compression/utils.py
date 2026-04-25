@@ -11,10 +11,7 @@ from typing import List
 
 
 def notes_to_points(notes):
-    groups = defaultdict(set)
-    for tick, key, inst in notes:
-        groups[(tick, key)].add(inst)
-    return [Point(tick, key, inst_set) for (tick, key), inst_set in groups.items()]
+    return [Point(tick, key, instrument) for tick, key, instrument in notes]
 
 def visualize(tecs: List[TEC]) -> None:
     """
@@ -76,7 +73,7 @@ def rebuild(tecs: List[TEC]) -> List[Point]:
         # add translated copies
         for v in tec.translators:
             for p in pattern_points:
-                translated = Point(p.tick + v[0], p.key + v[1], p.inst_set)
+                translated = Point(p.tick + v[0], p.key + v[1], p.instrument)
                 points.add(translated)
     # optionally sort for consistent output
     return sorted(points)  # sorted by tick then pitch

@@ -15,7 +15,7 @@ class TEC(object):
         cov = set(self.pattern)
         for v in self.translators:
             for p in self.pattern:
-                cov.add(Point(p.tick + v[0], p.key + v[1], p.inst_set))
+                cov.add(Point(p.tick + v[0], p.key + v[1], p.instrument))
         return cov
 
     @property

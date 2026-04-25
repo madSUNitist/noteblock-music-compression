@@ -59,7 +59,7 @@ def siatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TEC
 
             ok = True
             for p in pattern:
-                pp = Point(p.tick + w[0], p.key + w[1], p.inst_set)
+                pp = Point(p.tick + w[0], p.key + w[1], p.instrument)
                 if pp not in points:
                     ok = False
                     break

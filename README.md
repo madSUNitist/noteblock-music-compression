@@ -95,18 +95,18 @@ new_file = pynbs.new_file(**song.header.__dict__)
 
 curr_tick, curr_layer = -1, 0
 for point in rebuilt_points:
-    tick, key = point.tick, point.key
-    for inst in point.inst_set:
-        # update curr_tick & curr_layer
-        if curr_tick != tick:
-            curr_tick, curr_layer = tick, 0
-        else:
-            curr_layer += 1
+    tick, key, instrument = point.tick, point.key, point.instrument
+    
+    # Update curr_tick & curr_layer
+    if curr_tick != tick:
+        curr_tick, curr_layer = tick, 0
+    else:
+        curr_layer += 1
         
-        # add note
-        new_file.notes.append(
-            pynbs.Note(tick, curr_layer, inst, key)
-        )
+    # Add note
+    new_file.notes.append(
+        pynbs.Note(tick, curr_layer, instrument, key)
+    )
 
 new_file.save("your_song_compressed.nbs")
 ```

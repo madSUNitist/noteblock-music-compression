@@ -5,7 +5,7 @@ from nbs_compression.utils import notes_to_points, visualize, rebuild
 import pynbs
 
 if __name__ == "__main__":
-    nbs_file_path = 'nbs_files/STAY.nbs'
+    nbs_file_path = 'nbs_files/test_4.nbs'
 
     # 1.1. Read `.nbs` file
     song = pynbs.read(nbs_file_path)
@@ -38,17 +38,17 @@ if __name__ == "__main__":
 
     curr_tick, curr_layer = -1, 0
     for point in rebuilt_points:
-        tick, key = point.tick, point.key
-        for inst in point.inst_set:
-            # update curr_tick & curr_layer
-            if curr_tick != tick:
-                curr_tick, curr_layer = tick, 0
-            else:
-                curr_layer += 1
+        tick, key, instrument = point.tick, point.key, point.instrument
+        
+        # update curr_tick & curr_layer
+        if curr_tick != tick:
+            curr_tick, curr_layer = tick, 0
+        else:
+            curr_layer += 1
             
-            # add note
-            new_file.notes.append(
-                pynbs.Note(tick, curr_layer, inst, key)
-            )
+        # add note
+        new_file.notes.append(
+            pynbs.Note(tick, curr_layer, instrument, key)
+        )
 
     new_file.save('.'.join(nbs_file_path.split('.')[:-1]) + '_rebuild.nbs')

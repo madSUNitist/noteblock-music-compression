@@ -8,7 +8,7 @@
 
 ## 性能优化
 
-SIA、SIATEC、COSIATEC、RecurSIA 等核心算法均使用 rust 语言重写，并通过 PyO3 提供 Python 绑定。运行时优先尝试使用预编译的 rust 实现；若失败则退回 python 实现。 
+SIA、SIATEC、COSIATEC、RecurSIA 等核心算法均使用 rust 语言重写，实现了约**10 倍**的提速，并通过 PyO3 提供 Python 绑定。运行时优先尝试使用预编译的 rust 实现；若失败则退回 python 实现。 
 
 ## 核心算法
 

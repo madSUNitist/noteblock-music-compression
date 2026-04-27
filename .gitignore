@@ -11,3 +11,9 @@ wheels/
 
 # Others
 refs
+nbs_files
+
+# Rust / PyO3 compilation artifacts
+*.pyd
+*.pdb
+target/

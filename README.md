@@ -38,7 +38,7 @@ pynbs>=1.1.0
 
 使用 `pip` 安装：
 ```pwsh
-uv pip install nbs_compression
+uv pip install logic-music-compression
 ```
 
 或从 release 中下载最新的 `.whl` 文件：

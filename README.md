@@ -31,6 +31,11 @@ pynbs>=1.1.0
 
 ## Quick Start
 
+从 Release 中下载最新的 `.whl` 文件
+```pwsh
+uv pip install path/to/.whl
+```
+
 ### 读取 `.nbs` 文件
 
 ```python

@@ -49,7 +49,7 @@ jobs:
         with:
           name: wheels-${{ matrix.target }}
           path: dist/*.whl
-
+          
   create_release:
     name: Create GitHub Release and attach wheels
     runs-on: ubuntu-latest
@@ -67,7 +67,6 @@ jobs:
         with:
           path: all_wheels
 
-      # 将下载的 wheel 统一收集到一个 dist 目录，方便上传到 PyPI 和 GitHub Release
       - name: Organize wheels into dist/
         run: |
           mkdir -p dist
@@ -109,6 +108,6 @@ jobs:
       - name: Publish to PyPI
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
-          MATURIN_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
-          uv tool run maturin upload --skip-existing dist/*.whl
+          uv publish

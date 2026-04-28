@@ -13,6 +13,7 @@ wheels/
 refs
 nbs_files
 *.nbs
+.env
 
 # Rust / PyO3 compilation artifacts
 *.pyd

@@ -85,20 +85,17 @@ jobs:
             echo "CHANGELOG.md not found!"
             exit 1
           fi
-          NOTES=$(awk -v ver="$VERSION" '
-            BEGIN { found=0; }
-            /^## \[/ && found==0 && $2 ~ "\\[" ver "\\]" { found=1; next; }
-            /^## [^[]/ && found==0 && $2 == ver { found=1; next; }
-            found==1 && /^## / { exit; }
-            found==1 { print; }
-          ' "$CHANGELOG_FILE")
+
+          NOTES=$(sed -n "/^## \[$VERSION\]/,/^## /p" "$CHANGELOG_FILE" | sed '$d')
           if [ -z "$NOTES" ]; then
             NOTES="Release $TAG_NAME"
           fi
-          delimiter="EOF_$(date +%s)"
-          echo "body<<${delimiter}" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "${delimiter}" >> $GITHUB_OUTPUT
+          echo "NOTES=$NOTES"
+          {
+            echo "body<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2

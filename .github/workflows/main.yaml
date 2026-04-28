@@ -3,8 +3,8 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'                # 推送 v1.0.0, v0.2.3 等标签时触发
-  workflow_dispatch:        # 也允许手动触发（调试用）
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build_wheels:
@@ -21,7 +21,7 @@ jobs:
           - os: macos-latest
             target: x86_64-apple-darwin
           - os: macos-latest
-            target: aarch64-apple-darwin   # Apple Silicon (M1/M2/M3)
+            target: aarch64-apple-darwin
     steps:
       - uses: actions/checkout@v4
 
@@ -55,32 +55,34 @@ jobs:
     runs-on: ubuntu-latest
     needs: build_wheels
     permissions:
-      contents: write          # 必须：允许修改 Release
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0       # 确保获取完整历史（可选，但提取 changelog 不需要）
+          fetch-depth: 0
 
       - name: Download all wheels
         uses: actions/download-artifact@v4
         with:
           path: all_wheels
 
+      # 将下载的 wheel 统一收集到一个 dist 目录，方便上传到 PyPI 和 GitHub Release
+      - name: Organize wheels into dist/
+        run: |
+          mkdir -p dist
+          find all_wheels -name "*.whl" -exec cp {} dist/ \;
+
       - name: Extract release notes from CHANGELOG
         id: extract_notes
         run: |
-          TAG_NAME=${GITHUB_REF_NAME}          # 例如 v0.2.0
-          VERSION=${TAG_NAME#v}                # 去掉前缀 v -> 0.2.0
-
+          TAG_NAME=${GITHUB_REF_NAME}
+          VERSION=${TAG_NAME#v}
           CHANGELOG_FILE="CHANGELOG.md"
           if [ ! -f "$CHANGELOG_FILE" ]; then
             echo "CHANGELOG.md not found!"
             exit 1
           fi
-
-          # 使用 awk 提取从 "## [${VERSION}]" 或 "## ${VERSION}" 到下一个 "## " 之间的内容
-          # 先尝试匹配带中括号的格式 [0.2.0]，再尝试无中括号的格式
           NOTES=$(awk -v ver="$VERSION" '
             BEGIN { found=0; }
             /^## \[/ && found==0 && $2 ~ "\\[" ver "\\]" { found=1; next; }
@@ -88,23 +90,25 @@ jobs:
             found==1 && /^## / { exit; }
             found==1 { print; }
           ' "$CHANGELOG_FILE")
-
           if [ -z "$NOTES" ]; then
-            echo "No release notes found for version $VERSION in $CHANGELOG_FILE"
-            # 可选：使用默认消息
             NOTES="Release $TAG_NAME"
           fi
-
-          # 设置多行输出
           delimiter="EOF_$(date +%s)"
           echo "body<<${delimiter}" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "${delimiter}" >> $GITHUB_OUTPUT
 
-      - name: Create Release and upload assets
+      - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
         with:
           body: ${{ steps.extract_notes.outputs.body }}
-          files: all_wheels/**/*.whl
+          files: dist/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to PyPI
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          MATURIN_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          uv tool run maturin upload --skip-existing dist/*.whl

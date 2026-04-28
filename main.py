@@ -5,7 +5,7 @@ from nbs_compression.utils import notes_to_points, tecs_to_nbs
 import pynbs
 
 if __name__ == "__main__":
-    nbs_file_path = 'nbs_files/test_10.nbs'
+    nbs_file_path = 'nbs_files/STAY.nbs'
 
     # 1. Read `.nbs` file & convert into `Point` & get mapping dict
     song = pynbs.read(nbs_file_path)

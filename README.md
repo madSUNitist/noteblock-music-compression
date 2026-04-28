@@ -10,7 +10,7 @@
 
 SIA、SIATEC、COSIATEC、RecurSIA 等核心算法均使用 rust 语言重写，实现了约 **10 倍** 的提速，并通过 PyO3 提供 python 绑定。运行时优先尝试使用预编译的 rust 实现；若失败则退回 python 实现。
 
-**关键优化**：SIA 算法从存储 \( O(n^2) \) 个点对优化为 **在线 HashMap 聚合分组**，内存从 80,000 点时的 **240 GB 降至几百 MB**，解决了大规模 NBS 文件的内存爆炸问题。
+**关键优化**：SIA 算法从存储 \( O(n^2) \) 个点对优化为 **在线 HashMap 聚合分组**，解决了大规模 NBS 文件的内存爆炸问题。
 
 由于 SIA 模式表示的非唯一性与哈希迭代不确定性，python 与 rust 的运行结果可能略有不同（偶尔相差 1 TEC），这将在将来得到修复。
 
@@ -87,10 +87,10 @@ for i, tec in enumerate(tecs):
 ```python
 from nbs_compression.utils import tecs_to_nbs
 
-# mapping 是之前 notes_to_points 返回的字典
 new_file = tecs_to_nbs(tecs, mapping, song.header.__dict__)
 new_file.save("your_song_compressed.nbs")
 ```
+这里的 `mapping` 是之前 `notes_to_points` 返回的字典。
 
 ## 从源码构建 rust 扩展
 

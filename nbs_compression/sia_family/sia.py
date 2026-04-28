@@ -1,51 +1,42 @@
 from . import Point, Vector, warn_python_impl_deco
-
 from typing import List, Dict
-
+from collections import defaultdict
 
 @warn_python_impl_deco(
     "SIA algorithm: using Python implementation (slower). "
     "For better performance, consider using the Rust implementation."
 )
-def sia(dataset: List[Point], restrict_dpitch_zero: bool = False) -> Dict[Vector, List[Point]]:
+def find_mtps(dataset: List[Point], restrict_dpitch_zero: bool = False) -> Dict[Vector, List[Point]]:
     """
     SIA algorithm: compute all maximal translatable patterns (MTPs).
     Returns a dict: vector -> list of points that are the MTP (starting points).
     The MTP for vector v is { p in dataset | p+v in dataset }.
     """
-    # sort dataset lexicographically (by tick, then pitch)
-    points = sorted(dataset)
+    points = list(dataset)          # no sorting, just a copy
     n = len(points)
-    # build vector table: for each i>j, vector = points[i] - points[j]
-    # we'll store (vector, start_point) pairs
-    vectors = []  # list of (v, p_start)
+
+    # Use a dictionary to group start points by vector online
+    groups = defaultdict(set)       # vector -> set of start points
+
     for i in range(n):
+        ti, pi = points[i]
         for j in range(n):
             if i == j:
                 continue
-            v = (points[i][0] - points[j][0], points[i][1] - points[j][1])
-            # filter non-zero dpitch
-            if restrict_dpitch_zero and v[1] != 0:
+            tj, pj = points[j]
+            dx = ti - tj
+            dy = pi - pj
+            if restrict_dpitch_zero and dy != 0:
                 continue
-            vectors.append((v, points[j]))
-    # sort by vector (lexicographically)
-    vectors.sort(key=lambda x: x[0])
-    # scan to group by vector
+            groups[(dx, dy)].add((tj, pj))
+
+    # Build result: filter out zero vector and groups with fewer than 2 points
     mtps = {}
-    i = 0
-    while i < len(vectors):
-        v = vectors[i][0]
-        start_points = []
-        while i < len(vectors) and vectors[i][0] == v:
-            start_points.append(vectors[i][1])
-            i += 1
-        # remove duplicates (same start point may appear multiple times from different pairs)
-        start_points = sorted(set(start_points))
-        
+    for v, start_set in groups.items():
         if v == (0, 0):
             continue
-        if len(start_points) < 2:
+        if len(start_set) < 2:
             continue
-        
-        mtps[v] = start_points
+        mtps[v] = sorted(start_set)   # sorted to match original output order
+
     return mtps

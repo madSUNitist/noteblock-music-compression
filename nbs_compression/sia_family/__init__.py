@@ -36,45 +36,44 @@ _rust_available = False
 
 try:
     from ._core import (
-        sia,
-        siatec,
-        cosiatec,
-        recur_sia_cosiatec,
-        compress_to_encoding,
-        is_better_tec,
-        TEC,
+        find_mtps,
+        build_tecs_from_mtps,
+        cosiatec_compress,
+        recursive_cosiatec_compress,
+        TranslationalEquivalence, is_better_tec
     )
     _rust_available = True
     print("[sia_family] Using Rust-accelerated implementations (via _core).")
 except ImportError as e:
     print(f"[sia_family] Rust extension not found: {e}. Falling back to pure Python implementations.")
     # Fallback: import from local modules
-    from .sia import sia
-    from .siatec import siatec, is_better_tec
-    from .cosiatec import cosiatec, compress_to_encoding
-    from .recursia import recur_sia_cosiatec
-    from .tec import TEC
+    from .sia import find_mtps
+    from .siatec import build_tecs_from_mtps
+    from .cosiatec import cosiatec_compress
+    from .recursia import recursive_cosiatec_compress
+    from .tec import TranslationalEquivalence, is_better_tec
     _rust_available = False
 
 # Optionally log more details
 if _rust_available:
     logger.info("Rust extension loaded successfully.")
-    
-from .sia import sia as sia_py
-from .siatec import siatec as siatec_py, is_better_tec as is_better_tec_py
-from .cosiatec import cosiatec as cosiatec_py, compress_to_encoding as compress_to_encoding_py
-from .recursia import recur_sia_cosiatec as recur_sia_cosiatec_py
-from .tec import TEC as TEC_py
+
+import nbs_compression.sia_family.cosiatec as _cosiatec
+cosiatec_py = _cosiatec
+from .sia import find_mtps as find_mtps_py
+from .siatec import build_tecs_from_mtps as build_tecs_from_mtps_py
+from .cosiatec import cosiatec_compress as cosiatec_compress_py
+from .recursia import recursive_cosiatec_compress as recursive_cosiatec_compress_py
+from .tec import TranslationalEquivalence as TranslationalEquivalence_py, is_better_tec as is_better_tec_py
 
 # Expose public API
 __all__ = [
     "Point",
     "Vector",
-    "sia", "sia_py", 
-    "siatec", "siatec_py", 
-    "cosiatec", "cosiatec_py", 
-    "recur_sia_cosiatec", "recur_sia_cosiatec_py", 
-    "compress_to_encoding", "compress_to_encoding_py", 
+    "find_mtps", "find_mtps_py", 
+    "build_tecs_from_mtps", "build_tecs_from_mtps_py", 
+    "cosiatec_compress", "cosiatec_compress_py", 
+    "recursive_cosiatec_compress", "recursive_cosiatec_compress_py",  
     "is_better_tec", "is_better_tec_py", 
-    "TEC", "TEC_py"
+    "TranslationalEquivalence", "TranslationalEquivalence_py"
 ]

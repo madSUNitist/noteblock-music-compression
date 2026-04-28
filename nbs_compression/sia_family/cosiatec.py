@@ -1,6 +1,6 @@
-from .tec import TEC
+from .tec import TranslationalEquivalence
 from . import Point, warn_python_impl_deco
-from .siatec import siatec
+from .siatec import build_tecs_from_mtps
 
 from typing import List, Tuple
 
@@ -9,7 +9,7 @@ from typing import List, Tuple
     "COSIATEC is using the Python implementation (slower). "
     "For better performance, consider using the Rust implementation."
 )
-def cosiatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TEC]:
+def cosiatec_compress(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TranslationalEquivalence]:
     """
     COSIATEC greedy compression algorithm. 
     """        
@@ -18,11 +18,11 @@ def cosiatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[T
     while remaining:
         # compute all TECs on the remaining points
         pts_list = sorted(remaining)
-        all_tecs = siatec(pts_list, restrict_dpitch_zero=restrict_dpitch_zero)
+        all_tecs = build_tecs_from_mtps(pts_list, restrict_dpitch_zero=restrict_dpitch_zero)
         if not all_tecs:
             # no more patterns -> output remaining as trivial TECs (single points)
             for p in remaining:
-                tec_list.append(TEC([p], set()))
+                tec_list.append(TranslationalEquivalence([p], set()))
             break
         # select best TEC
         best = max(all_tecs, key=lambda tec: (tec.compression_ratio, tec.compactness(remaining), len(tec.coverage)))
@@ -30,13 +30,3 @@ def cosiatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[T
         # remove covered points
         remaining -= best.coverage
     return tec_list
-
-def compress_to_encoding(tecs: List[TEC]) -> List[Tuple]:
-    """
-    Convert list of TECs to a human-readable encoding format.
-    For each TEC: (pattern_points, list_of_translators)
-    """
-    encoding = []
-    for tec in tecs:
-        encoding.append((tec.pattern, list(tec.translators)))
-    return encoding

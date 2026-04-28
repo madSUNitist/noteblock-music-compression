@@ -1,6 +1,6 @@
-from .tec import TEC
+from .tec import TranslationalEquivalence
 from . import Point, warn_python_impl_deco
-from .siatec import siatec
+from .siatec import build_tecs_from_mtps
 
 from typing import List
 
@@ -9,9 +9,9 @@ from typing import List
     "RecurSIA-COSIATEC is using the Python implementation (slower). "
     "For better performance, consider using the Rust implementation."
 )
-def recur_sia_cosiatec(dataset: List[Point], 
-                       restrict_dpitch_zero: bool = False,
-                       min_pattern_size: int = 2) -> List[TEC]:
+def recursive_cosiatec_compress(dataset: List[Point], 
+                                restrict_dpitch_zero: bool = False,
+                                min_pattern_size: int = 2) -> List[TranslationalEquivalence]:
     """
     RecurSIA applied to COSIATEC: recursively compress patterns.
     
@@ -30,11 +30,11 @@ def recur_sia_cosiatec(dataset: List[Point],
     while remaining:
         # 1. Find best TEC
         pts_list = sorted(remaining)
-        all_tecs = siatec(pts_list, restrict_dpitch_zero=restrict_dpitch_zero)
+        all_tecs = build_tecs_from_mtps(pts_list, restrict_dpitch_zero=restrict_dpitch_zero)
         if not all_tecs:
             # No pattern found
             for p in remaining:
-                tec_list.append(TEC([p], set()))
+                tec_list.append(TranslationalEquivalence([p], set()))
             break
         
         # 2. Select best TEC
@@ -46,7 +46,7 @@ def recur_sia_cosiatec(dataset: List[Point],
         
         # 3. Recursion
         if len(best.pattern) >= min_pattern_size:
-            sub_tecs = recur_sia_cosiatec(best.pattern, 
+            sub_tecs = recursive_cosiatec_compress(best.pattern, 
                                           restrict_dpitch_zero=restrict_dpitch_zero,
                                           min_pattern_size=min_pattern_size)
             best.sub_tecs = sub_tecs

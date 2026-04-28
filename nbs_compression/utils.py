@@ -1,19 +1,33 @@
 from .sia_family import Point
-from .sia_family.tec import TEC
+from .sia_family.tec import TranslationalEquivalence
 
 from collections import defaultdict
 
 import pynbs
 
-from typing import List
+from typing import List, Tuple
 
 
-N = 256
+PITCH_BITS = 14
+OFFSET = 1200
 
-def notes_to_points(notes):
-    return [(tick, key + instrument * N) for tick, key, instrument in notes]
+def notes_to_points(notes: List[pynbs.Note]) -> Tuple[List[Tuple[int, int]], defaultdict[Tuple[int, int], List[pynbs.Note]]]:
+    points = []
+    mapping = defaultdict(list)
 
-def tecs_to_nbs(tecs: List[TEC], header: dict) -> pynbs.File:
+    for note in notes:
+        tick = note.tick
+        pitch_cents = note.key * 100 + note.pitch
+        pitch_off = pitch_cents + OFFSET
+        encoded_y = (note.instrument << PITCH_BITS) | pitch_off
+        point = (tick, encoded_y)
+        points.append(point)
+        mapping[point].append(note)
+
+    return points, mapping
+
+
+def tecs_to_nbs(tecs: List[TranslationalEquivalence], note_dict: defaultdict[Tuple[int, int], List[pynbs.Note]], header: dict) -> pynbs.File:
     """
     Convert TECs to NBS file with layer blocks per TEC.
     Each TEC gets a contiguous block of layers.
@@ -26,9 +40,9 @@ def tecs_to_nbs(tecs: List[TEC], header: dict) -> pynbs.File:
         if not coverage:
             tec_concurrency.append(0)
             continue
-        tick_counts = defaultdict(int)
+        tick_counts: defaultdict[int, int] = defaultdict(int)
         for p in coverage:
-            tick_counts[p[0]] += 1   # p[0] is tick
+            tick_counts[p[0]] += len(note_dict[p])
         max_count = max(tick_counts.values())
         tec_concurrency.append(max_count)
 
@@ -43,25 +57,21 @@ def tecs_to_nbs(tecs: List[TEC], header: dict) -> pynbs.File:
     all_notes = []
     for tec_idx, tec in enumerate(tecs):
         offset = layer_offsets[tec_idx]
+        coverage = tec.coverage
+        if not coverage:
+            continue
+        # group by tick
         tick_groups = defaultdict(list)
-        for p in tec.coverage:
-            tick_groups[p[0]].append(p)   # group by tick
-        for tick, points in tick_groups.items():
+        for p in coverage:
+            tick = p[0]
+            original_notes = note_dict[p]
+            for note in original_notes:
+                tick_groups[tick].append((p[1], note))
+        for tick, items in tick_groups.items():
             # Sort points by encoded key to get deterministic layer assignment
-            points_sorted = sorted(points, key=lambda pt: pt[1])
-            for local_layer, pt in enumerate(points_sorted):
-                code = pt[1]
-                instrument, key = divmod(code, N)
-                layer = offset + local_layer
-                note = pynbs.Note(
-                    tick=tick,
-                    layer=layer,
-                    instrument=instrument,
-                    key=key,
-                    velocity=100,
-                    panning=0,
-                    pitch=0
-                )
+            items_sorted = sorted(items, key=lambda x: x[0])
+            for local_layer, (_, note) in enumerate(items_sorted):
+                note.layer = offset + local_layer
                 all_notes.append(note)
 
     # 4. Sort notes by tick (required by NBS format)

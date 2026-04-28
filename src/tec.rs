@@ -1,32 +1,34 @@
 use pyo3::prelude::*;
+
+use std::fmt;
 use std::collections::HashSet;
 
 /// Translational Equivalence Class: a pattern + set of non-zero translators.
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
-pub struct TEC {
-    /// Sorted pattern points
+pub struct TranslationalEquivalence {
+    /// Sorted pattern points (u32 range)
     #[pyo3(get)]
-    pub pattern: Vec<(i64, i64)>,
-    /// Non-zero translators
+    pub pattern: Vec<(u32, u32)>,
+    /// Non-zero translators (i32 differences)
     #[pyo3(get)]
-    pub translators: HashSet<(i64, i64)>,
+    pub translators: HashSet<(i32, i32)>,
     /// Sub-TECs (optional)
     #[pyo3(get)]
-    pub sub_tecs: Vec<TEC>,
+    pub sub_tecs: Vec<TranslationalEquivalence>,
 }
 
 #[pymethods]
-impl TEC {
+impl TranslationalEquivalence {
     #[new]
     pub fn new(
-        pattern: Vec<(i64, i64)>,
-        translators: HashSet<(i64, i64)>,
-        sub_tecs: Option<Vec<TEC>>,
+        pattern: Vec<(u32, u32)>,
+        translators: HashSet<(i32, i32)>,
+        sub_tecs: Option<Vec<TranslationalEquivalence>>,
     ) -> Self {
         let mut pattern_sorted = pattern;
         pattern_sorted.sort();
-        TEC {
+        TranslationalEquivalence {
             pattern: pattern_sorted,
             translators,
             sub_tecs: sub_tecs.unwrap_or_else(Vec::new),
@@ -37,12 +39,14 @@ impl TEC {
     #[getter]
     pub fn coverage(&self, _py: Python) -> PyResult<HashSet<(i64, i64)>> {
         let mut cov = HashSet::new();
-        for &p in &self.pattern {
-            cov.insert(p);
+        // Insert pattern points as i64
+        for &(x, y) in &self.pattern {
+            cov.insert((x as i64, y as i64));
         }
-        for &v in &self.translators {
-            for &p in &self.pattern {
-                cov.insert((p.0 + v.0, p.1 + v.1));
+        // Insert translated copies
+        for &(dx, dy) in &self.translators {
+            for &(x, y) in &self.pattern {
+                cov.insert((x as i64 + dx as i64, y as i64 + dy as i64));
             }
         }
         Ok(cov)
@@ -67,8 +71,9 @@ impl TEC {
         if self.pattern.is_empty() {
             return 0.0;
         }
-        let xs: Vec<i64> = self.pattern.iter().map(|p| p.0).collect();
-        let ys: Vec<i64> = self.pattern.iter().map(|p| p.1).collect();
+        // Convert pattern coordinates to i64 for bounds
+        let xs: Vec<i64> = self.pattern.iter().map(|p| p.0 as i64).collect();
+        let ys: Vec<i64> = self.pattern.iter().map(|p| p.1 as i64).collect();
         let min_x = *xs.iter().min().unwrap();
         let max_x = *xs.iter().max().unwrap();
         let min_y = *ys.iter().min().unwrap();
@@ -85,11 +90,67 @@ impl TEC {
             self.pattern.len() as f64 / count as f64
         }
     }
+}
 
-    pub fn __repr__(&self) -> String {
-        format!(
-            "TEC(pattern={:?}, translators={:?})",
-            self.pattern, self.translators
+impl fmt::Display for TranslationalEquivalence {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f, "TEC(pattern={:?}, translators={:?})", self.pattern, self.translators
         )
     }
+}
+
+/// Compare two TECs according to the rules in ISBETTERTEC.
+/// Returns true if tec1 is better than tec2.
+#[pyfunction]
+pub fn is_better_tec(
+    py: Python,
+    tec1: &TranslationalEquivalence,
+    tec2: &TranslationalEquivalence,
+    dataset_points: HashSet<(i64, i64)>,
+) -> bool {
+    // compression ratio
+    let cr1 = tec1.compression_ratio(py).unwrap_or(0.0);
+    let cr2 = tec2.compression_ratio(py).unwrap_or(0.0);
+    if cr1 != cr2 {
+        return cr1 > cr2;
+    }
+    // compactness
+    let comp1 = tec1.compactness(dataset_points.clone());
+    let comp2 = tec2.compactness(dataset_points);
+    if comp1 != comp2 {
+        return comp1 > comp2;
+    }
+    // coverage size
+    let cov1 = tec1.coverage(py).map(|c| c.len()).unwrap_or(0);
+    let cov2 = tec2.coverage(py).map(|c| c.len()).unwrap_or(0);
+    if cov1 != cov2 {
+        return cov1 > cov2;
+    }
+    // pattern size
+    let len1 = tec1.pattern.len();
+    let len2 = tec2.pattern.len();
+    if len1 != len2 {
+        return len1 > len2;
+    }
+    // temporal width (duration of pattern)
+    let width1 = tec1.pattern.iter().map(|p| p.0).max().unwrap_or(0) -
+                 tec1.pattern.iter().map(|p| p.0).min().unwrap_or(0);
+    let width2 = tec2.pattern.iter().map(|p| p.0).max().unwrap_or(0) -
+                 tec2.pattern.iter().map(|p| p.0).min().unwrap_or(0);
+    if width1 != width2 {
+        return width1 < width2;
+    }
+    // bounding box area (tick_range * pitch_range)
+    let x1 = tec1.pattern.iter().map(|p| p.0).max().unwrap_or(0) -
+             tec1.pattern.iter().map(|p| p.0).min().unwrap_or(0);
+    let y1 = tec1.pattern.iter().map(|p| p.1).max().unwrap_or(0) -
+             tec1.pattern.iter().map(|p| p.1).min().unwrap_or(0);
+    let area1 = x1 * y1;
+    let x2 = tec2.pattern.iter().map(|p| p.0).max().unwrap_or(0) -
+             tec2.pattern.iter().map(|p| p.0).min().unwrap_or(0);
+    let y2 = tec2.pattern.iter().map(|p| p.1).max().unwrap_or(0) -
+             tec2.pattern.iter().map(|p| p.1).min().unwrap_or(0);
+    let area2 = x2 * y2;
+    area1 < area2
 }

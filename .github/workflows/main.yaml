@@ -57,15 +57,54 @@ jobs:
     permissions:
       contents: write          # 必须：允许修改 Release
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0       # 确保获取完整历史（可选，但提取 changelog 不需要）
+
       - name: Download all wheels
         uses: actions/download-artifact@v4
         with:
           path: all_wheels
 
+      - name: Extract release notes from CHANGELOG
+        id: extract_notes
+        run: |
+          TAG_NAME=${GITHUB_REF_NAME}          # 例如 v0.2.0
+          VERSION=${TAG_NAME#v}                # 去掉前缀 v -> 0.2.0
+
+          CHANGELOG_FILE="CHANGELOG.md"
+          if [ ! -f "$CHANGELOG_FILE" ]; then
+            echo "CHANGELOG.md not found!"
+            exit 1
+          fi
+
+          # 使用 awk 提取从 "## [${VERSION}]" 或 "## ${VERSION}" 到下一个 "## " 之间的内容
+          # 先尝试匹配带中括号的格式 [0.2.0]，再尝试无中括号的格式
+          NOTES=$(awk -v ver="$VERSION" '
+            BEGIN { found=0; }
+            /^## \[/ && found==0 && $2 ~ "\\[" ver "\\]" { found=1; next; }
+            /^## [^[]/ && found==0 && $2 == ver { found=1; next; }
+            found==1 && /^## / { exit; }
+            found==1 { print; }
+          ' "$CHANGELOG_FILE")
+
+          if [ -z "$NOTES" ]; then
+            echo "No release notes found for version $VERSION in $CHANGELOG_FILE"
+            # 可选：使用默认消息
+            NOTES="Release $TAG_NAME"
+          fi
+
+          # 设置多行输出
+          delimiter="EOF_$(date +%s)"
+          echo "body<<${delimiter}" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
+
       - name: Create Release and upload assets
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: false   # 不自动生成发布说明
+          body: ${{ steps.extract_notes.outputs.body }}
           files: all_wheels/**/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

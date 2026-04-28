@@ -2,9 +2,9 @@ from . import Point, Vector
 
 from typing import List, Set, Optional
 
-class TEC(object):
+class TranslationalEquivalence(object):
     """Translational Equivalence Class: a pattern + set of non-zero translators."""
-    def __init__(self, pattern: List[Point], translators: Set[Vector], sub_tecs: Optional[List['TEC']] = None):
+    def __init__(self, pattern: List[Point], translators: Set[Vector], sub_tecs: Optional[List['TranslationalEquivalence']] = None):
         self.pattern = sorted(pattern)
         self.translators = translators
         self.sub_tecs = sub_tecs if sub_tecs is not None else []
@@ -48,3 +48,35 @@ class TEC(object):
     def __repr__(self):
         return f"TEC(pattern={self.pattern}, translators={self.translators})"
 
+
+def is_better_tec(tec1: TranslationalEquivalence, tec2: TranslationalEquivalence, dataset_points: Set[Point]) -> bool:
+    """Compare two TECs according to the rules in ISBETTERTEC."""
+    # compression ratio
+    if tec1.compression_ratio != tec2.compression_ratio:
+        return tec1.compression_ratio > tec2.compression_ratio
+    # compactness
+    comp1 = tec1.compactness(dataset_points)
+    comp2 = tec2.compactness(dataset_points)
+    if comp1 != comp2:
+        return comp1 > comp2
+    # coverage size
+    cov1 = len(tec1.coverage)
+    cov2 = len(tec2.coverage)
+    if cov1 != cov2:
+        return cov1 > cov2
+    # pattern size
+    if len(tec1.pattern) != len(tec2.pattern):
+        return len(tec1.pattern) > len(tec2.pattern)
+    # temporal width (duration of pattern)
+    width1 = max(p[0] for p in tec1.pattern) - min(p[0] for p in tec1.pattern)
+    width2 = max(p[0] for p in tec2.pattern) - min(p[0] for p in tec2.pattern)
+    if width1 != width2:
+        return width1 < width2
+    # bounding box area (tick_range * pitch_range)
+    x1 = max(p[0] for p in tec1.pattern) - min(p[0] for p in tec1.pattern)
+    y1 = max(p[1] for p in tec1.pattern) - min(p[1] for p in tec1.pattern)
+    area1 = x1 * y1
+    x2 = max(p[0] for p in tec2.pattern) - min(p[0] for p in tec2.pattern)
+    y2 = max(p[1] for p in tec2.pattern) - min(p[1] for p in tec2.pattern)
+    area2 = x2 * y2
+    return area1 < area2

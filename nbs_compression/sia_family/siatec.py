@@ -1,5 +1,5 @@
-from .sia import sia
-from .tec import TEC
+from .sia import find_mtps
+from .tec import TranslationalEquivalence
 from . import Point, warn_python_impl_deco
 
 from typing import List, Set
@@ -9,13 +9,13 @@ from typing import List, Set
     "SIATEC algorithm: using Python implementation (slower). "
     "For better performance, consider using the Rust implementation."
 )
-def siatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TEC]:
+def build_tecs_from_mtps(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TranslationalEquivalence]:
     """
     SIATEC algorithm: for each MTP find its TEC (all occurrences).
     Returns a list of TECs (one per MTP).
     """
     points = set(dataset)
-    mtps = sia(dataset, restrict_dpitch_zero=restrict_dpitch_zero)  # vector -> list of starting points
+    mtps = find_mtps(dataset, restrict_dpitch_zero=restrict_dpitch_zero)  # vector -> list of starting points
     tecs = []
     for v, start_pts in mtps.items():
         if v == (0, 0):
@@ -70,38 +70,6 @@ def siatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TEC
                 translators.add(w)
 
         if translators:
-            tecs.append(TEC(pattern, translators))
+            tecs.append(TranslationalEquivalence(pattern, translators))
 
     return tecs
-
-def is_better_tec(tec1: TEC, tec2: TEC, dataset_points: Set[Point]) -> bool:
-    """Compare two TECs according to the rules in ISBETTERTEC."""
-    # compression ratio
-    if tec1.compression_ratio != tec2.compression_ratio:
-        return tec1.compression_ratio > tec2.compression_ratio
-    # compactness
-    comp1 = tec1.compactness(dataset_points)
-    comp2 = tec2.compactness(dataset_points)
-    if comp1 != comp2:
-        return comp1 > comp2
-    # coverage size
-    cov1 = len(tec1.coverage)
-    cov2 = len(tec2.coverage)
-    if cov1 != cov2:
-        return cov1 > cov2
-    # pattern size
-    if len(tec1.pattern) != len(tec2.pattern):
-        return len(tec1.pattern) > len(tec2.pattern)
-    # temporal width (duration of pattern)
-    width1 = max(p[0] for p in tec1.pattern) - min(p[0] for p in tec1.pattern)
-    width2 = max(p[0] for p in tec2.pattern) - min(p[0] for p in tec2.pattern)
-    if width1 != width2:
-        return width1 < width2
-    # bounding box area (tick_range * pitch_range)
-    x1 = max(p[0] for p in tec1.pattern) - min(p[0] for p in tec1.pattern)
-    y1 = max(p[1] for p in tec1.pattern) - min(p[1] for p in tec1.pattern)
-    area1 = x1 * y1
-    x2 = max(p[0] for p in tec2.pattern) - min(p[0] for p in tec2.pattern)
-    y2 = max(p[1] for p in tec2.pattern) - min(p[1] for p in tec2.pattern)
-    area2 = x2 * y2
-    return area1 < area2

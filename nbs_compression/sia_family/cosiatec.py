@@ -1,15 +1,18 @@
 from .tec import TEC
-from . import Point
+from . import Point, warn_python_impl_deco
 from .siatec import siatec
 
 from typing import List, Tuple
 
 
+@warn_python_impl_deco(
+    "COSIATEC is using the Python implementation (slower). "
+    "For better performance, consider using the Rust implementation."
+)
 def cosiatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TEC]:
     """
     COSIATEC greedy compression algorithm. 
-    """
-    points = set(dataset)
+    """        
     remaining = set(dataset)
     tec_list = []
     while remaining:

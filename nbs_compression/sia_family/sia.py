@@ -1,8 +1,12 @@
-from . import Point, Vector
+from . import Point, Vector, warn_python_impl_deco
 
 from typing import List, Dict
 
 
+@warn_python_impl_deco(
+    "SIA algorithm: using Python implementation (slower). "
+    "For better performance, consider using the Rust implementation."
+)
 def sia(dataset: List[Point], restrict_dpitch_zero: bool = False) -> Dict[Vector, List[Point]]:
     """
     SIA algorithm: compute all maximal translatable patterns (MTPs).

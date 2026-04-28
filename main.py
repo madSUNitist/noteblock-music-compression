@@ -1,5 +1,5 @@
-from nbs_compression.sia_family import recur_sia_cosiatec
-from nbs_compression.sia_family import cosiatec
+from nbs_compression.sia_family import recur_sia_cosiatec, recur_sia_cosiatec_py
+from nbs_compression.sia_family import cosiatec, cosiatec_py
 from nbs_compression.utils import notes_to_points, tecs_to_nbs
 
 import pynbs

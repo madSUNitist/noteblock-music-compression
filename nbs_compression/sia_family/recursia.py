@@ -1,9 +1,14 @@
 from .tec import TEC
-from . import Point
+from . import Point, warn_python_impl_deco
 from .siatec import siatec
 
 from typing import List
 
+
+@warn_python_impl_deco(
+    "RecurSIA-COSIATEC is using the Python implementation (slower). "
+    "For better performance, consider using the Rust implementation."
+)
 def recur_sia_cosiatec(dataset: List[Point], 
                        restrict_dpitch_zero: bool = False,
                        min_pattern_size: int = 2) -> List[TEC]:
@@ -18,7 +23,7 @@ def recur_sia_cosiatec(dataset: List[Point],
     Returns:
         List of TECs, where each TEC's pattern may have been recursively compressed,
         stored in TEC.sub_tecs.
-    """
+    """    
     remaining = set(dataset)
     tec_list = []
     

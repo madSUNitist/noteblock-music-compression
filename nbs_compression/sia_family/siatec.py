@@ -1,11 +1,14 @@
 from .sia import sia
 from .tec import TEC
-from . import Point
+from . import Point, warn_python_impl_deco
 
 from typing import List, Set
 
 
-
+@warn_python_impl_deco(
+    "SIATEC algorithm: using Python implementation (slower). "
+    "For better performance, consider using the Rust implementation."
+)
 def siatec(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TEC]:
     """
     SIATEC algorithm: for each MTP find its TEC (all occurrences).

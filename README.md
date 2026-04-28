@@ -8,9 +8,11 @@
 
 ## 性能优化
 
-SIA、SIATEC、COSIATEC、RecurSIA 等核心算法均使用 Rust 语言重写，实现了约 **10 倍** 的提速，并通过 PyO3 提供 Python 绑定。运行时优先尝试使用预编译的 Rust 实现；若失败则退回 Python 实现。
+SIA、SIATEC、COSIATEC、RecurSIA 等核心算法均使用 rust 语言重写，实现了约 **10 倍** 的提速，并通过 PyO3 提供 python 绑定。运行时优先尝试使用预编译的 rust 实现；若失败则退回 python 实现。
 
-**关键优化**：SIA 算法从存储 O(n²) 个点对优化为 **在线 HashMap 聚合分组**，内存从 80,000 点时的 **240 GB 降至几百 MB**，解决了大规模 NBS 文件的内存爆炸问题。
+**关键优化**：SIA 算法从存储 \( O(n^2) \) 个点对优化为 **在线 HashMap 聚合分组**，内存从 80,000 点时的 **240 GB 降至几百 MB**，解决了大规模 NBS 文件的内存爆炸问题。
+
+由于 SIA 模式表示的非唯一性与哈希迭代不确定性，python 与 rust 的运行结果可能略有不同（偶尔相差 1 TEC），这将在将来得到修复。
 
 ## 核心算法
 
@@ -29,7 +31,7 @@ pynbs>=1.1.0
 ```
 
 如果从源码安装，还需要：
-- Rust 1.89.0+
+- rust 1.89.0+
 - `maturin>=1.13,<2.0`
 
 ## Quick Start
@@ -49,9 +51,9 @@ nbs_file_path = 'your_song.nbs'
 
 song = pynbs.read(nbs_file_path)
 raw_notes = [(tick, note.key, note.instrument) for tick, chord in song for note in chord]
-# notes_to_points 返回 points 和 mapping 两个值
 points, mapping = notes_to_points(raw_notes)
 ```
+这里 `mapping` 存储压缩的 `(tick, pitch)` 到音符的多重集映射，用于在写回时候恢复和压缩无关的音符信息。
 
 ### 压缩
 
@@ -90,7 +92,7 @@ new_file = tecs_to_nbs(tecs, mapping, song.header.__dict__)
 new_file.save("your_song_compressed.nbs")
 ```
 
-## 从源码构建 Rust 扩展
+## 从源码构建 rust 扩展
 
 ```pwsh
 git clone git@github.com:madSUNitist/noteblock-music-compression.git
@@ -129,9 +131,9 @@ uv run maturin develop --release
 | `notes_to_points(notes)` | 将 `.nbs` 音符列表转换为 `(points, mapping)`，`points` 用于压缩，`mapping` 用于重建 |
 | `tecs_to_nbs(tecs, mapping, header)` | 将压缩结果重建为 `.nbs` 文件对象 |
 
-### 纯 Python 后备版本
+### 纯 python 后备版本
 
-所有函数均提供纯 Python 实现，以 `_py` 后缀命名（如 `find_mtps_py`），当 Rust 扩展不可用时自动使用。
+所有函数均提供纯 python 实现，以 `_py` 后缀命名（如 `find_mtps_py`），当 rust 扩展不可用时自动使用。
 
 ## Reference
 

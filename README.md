@@ -1,5 +1,10 @@
 # NBSlim
 
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PyPI](https://img.shields.io/pypi/v/nbslim.svg)](https://pypi.org/project/nbslim/)
+[![Rust](https://img.shields.io/badge/rust-1.89.0%2B-blue.svg)](https://www.rust-lang.org)
+[![build](https://img.shields.io/github/actions/workflow/status/madSUNitist/NBSlim/main.yaml?branch=main)](https://github.com/madSUNitist/NBSlim/actions)
+
 为高效实现 [@kemiamu](https://space.bilibili.com/3494363168508256) 的逻辑红石音乐而作。
 
 用于压缩 Note Block Studio (.nbs) 音乐文件的工具，以在 Minecraft 中高效存储和播放多音轨音乐。

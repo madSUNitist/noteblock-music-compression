@@ -55,11 +55,11 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
-      - name: Sync Python dependencies (uv sync)
-        run: uv sync --python ${{ matrix.python-version }}
-
       - name: Install maturin as a uv tool
         run: uv tool install maturin
+
+      - name: Sync Python dependencies (uv sync)
+        run: uv sync --python ${{ matrix.python-version }}
 
       - name: Build wheel
         run: uv run maturin build --release --target ${{ matrix.target }} --out dist

@@ -3,8 +3,8 @@ revision = 3
 requires-python = ">=3.9"
 
 [[package]]
-name = "logic-music-compression"
-version = "0.2.1"
+name = "nbslim"
+version = "0.2.2"
 source = { editable = "." }
 dependencies = [
     { name = "pynbs" },

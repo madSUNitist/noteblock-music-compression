@@ -1,6 +1,6 @@
-from nbs_compression.sia_family import recursive_cosiatec_compress, recursive_cosiatec_compress_py
-from nbs_compression.sia_family import cosiatec_compress, cosiatec_compress_py
-from nbs_compression.utils import notes_to_points, tecs_to_nbs
+from nbslim.sia_family import recursive_cosiatec_compress, recursive_cosiatec_compress_py
+from nbslim.sia_family import cosiatec_compress, cosiatec_compress_py
+from nbslim.utils import notes_to_points, tecs_to_nbs
 
 import pynbs
 

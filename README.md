@@ -38,7 +38,7 @@ pynbs>=1.1.0
 
 使用 `pip` 安装：
 ```pwsh
-uv pip install logic-music-compression
+uv pip install nbslim
 ```
 
 或从 release 中下载最新的 `.whl` 文件：
@@ -49,7 +49,7 @@ uv pip install path/to/.whl
 ### 读取 `.nbs` 文件
 
 ```python
-from nbs_compression.utils import notes_to_points
+from nbslim.utils import notes_to_points
 import pynbs
 
 nbs_file_path = 'your_song.nbs'
@@ -65,7 +65,7 @@ points, mapping = notes_to_points(raw_notes)
 #### COSIATEC
 
 ```python
-from nbs_compression.sia_family import cosiatec_compress
+from nbslim.sia_family import cosiatec_compress
 
 tecs = cosiatec_compress(points, restrict_dpitch_zero=True)
 ```
@@ -73,7 +73,7 @@ tecs = cosiatec_compress(points, restrict_dpitch_zero=True)
 #### RecurSIA
 
 ```python
-from nbs_compression.sia_family import recursive_cosiatec_compress
+from nbslim.sia_family import recursive_cosiatec_compress
 
 tecs = recursive_cosiatec_compress(points, restrict_dpitch_zero=True, min_pattern_size=2)
 ```
@@ -90,7 +90,7 @@ for i, tec in enumerate(tecs):
 ### 重建并保存为新的 `.nbs` 文件
 
 ```python
-from nbs_compression.utils import tecs_to_nbs
+from nbslim.utils import tecs_to_nbs
 
 new_file = tecs_to_nbs(tecs, mapping, song.header.__dict__)
 new_file.save("your_song_compressed.nbs")
@@ -101,7 +101,7 @@ new_file.save("your_song_compressed.nbs")
 
 ```pwsh
 git clone git@github.com:madSUNitist/noteblock-music-compression.git
-cd logic_music_compression
+cd nbslim
 uv sync
 uv tool install maturin
 uv run maturin develop --release

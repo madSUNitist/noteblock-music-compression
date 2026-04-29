@@ -3,8 +3,8 @@ requires = ["maturin>=1.13,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "logic-music-compression"
-version = "0.2.1"
+name = "nbslim"
+version = "0.2.2"
 description = "music compression algorithms for compact Minecraft redstone music. "
 readme = "README.md"
 requires-python = ">=3.9"
@@ -18,4 +18,4 @@ default = true
 
 [tool.maturin]
 python-source = "."
-module-name = "nbs_compression.sia_family._core"
+module-name = "nbslim.sia_family._core"

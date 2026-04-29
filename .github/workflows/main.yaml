@@ -8,20 +8,40 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheels for ${{ matrix.os }}
+    name: Build wheels for ${{ matrix.os }} (Python ${{ matrix.python-version }}, ${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        target: [
+          x86_64-unknown-linux-gnu,
+          x86_64-pc-windows-msvc,
+          x86_64-apple-darwin,
+          aarch64-apple-darwin
+        ]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        exclude:
+          # Linux: only `x86_64-unknown-linux-gnu`
           - os: ubuntu-latest
+            target: x86_64-pc-windows-msvc
+          - os: ubuntu-latest
+            target: x86_64-apple-darwin
+          - os: ubuntu-latest
+            target: aarch64-apple-darwin
+          # Windows: only `x86_64-pc-windows-msvc`
+          - os: windows-latest
             target: x86_64-unknown-linux-gnu
           - os: windows-latest
-            target: x86_64-pc-windows-msvc
-          - os: macos-latest
             target: x86_64-apple-darwin
-          - os: macos-latest
+          - os: windows-latest
             target: aarch64-apple-darwin
+          # macOS: only `x86_64-apple-darwin` & `aarch64-apple-darwin`
+          - os: macos-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: x86_64-pc-windows-msvc
+
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +56,7 @@ jobs:
           override: true
 
       - name: Sync Python dependencies (uv sync)
-        run: uv sync
+        run: uv sync --python ${{ matrix.python-version }}
 
       - name: Install maturin as a uv tool
         run: uv tool install maturin
@@ -47,7 +67,7 @@ jobs:
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.target }}
+          name: wheels-${{ matrix.target }}-py${{ matrix.python-version }}
           path: dist/*.whl
 
   create_release:

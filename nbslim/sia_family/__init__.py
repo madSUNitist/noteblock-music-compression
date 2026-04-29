@@ -58,8 +58,6 @@ except ImportError as e:
 if _rust_available:
     logger.info("Rust extension loaded successfully.")
 
-import nbs_compression.sia_family.cosiatec as _cosiatec
-cosiatec_py = _cosiatec
 from .sia import find_mtps as find_mtps_py
 from .siatec import build_tecs_from_mtps as build_tecs_from_mtps_py
 from .cosiatec import cosiatec_compress as cosiatec_compress_py

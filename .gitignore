@@ -15,6 +15,9 @@ nbs_files
 *.nbs
 .env
 
+# mypy
+.mypy_cache
+
 # Rust / PyO3 compilation artifacts
 *.pyd
 *.pdb

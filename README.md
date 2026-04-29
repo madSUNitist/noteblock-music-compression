@@ -1,4 +1,4 @@
-# Noteblock Music Compression
+# NBSlim
 
 为高效实现 [@kemiamu](https://space.bilibili.com/3494363168508256) 的逻辑红石音乐而作。
 
@@ -100,7 +100,7 @@ new_file.save("your_song_compressed.nbs")
 ## 从源码构建 rust 扩展
 
 ```pwsh
-git clone git@github.com:madSUNitist/noteblock-music-compression.git
+git clone git@github.com:madSUNitist/NBSlim.git
 cd nbslim
 uv sync
 uv tool install maturin

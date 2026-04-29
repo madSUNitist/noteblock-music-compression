@@ -1,3 +1,5 @@
+English Version | [中文版](README.zh.md)
+
 # NBSlim
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)

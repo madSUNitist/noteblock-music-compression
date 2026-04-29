@@ -1,4 +1,4 @@
-[English Version](README.md) | 中文版
+[English](README.md) | 简体中文
 
 # NBSlim
 

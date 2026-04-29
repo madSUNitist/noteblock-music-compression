@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "nbslim"
-version = "0.2.2"
+version = "0.2.3"
 description = "music compression algorithms for compact Minecraft redstone music. "
 readme = "README.md"
 requires-python = ">=3.9"

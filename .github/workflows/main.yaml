@@ -65,7 +65,7 @@ jobs:
         run: uv sync --python ${{ matrix.python-version }}
 
       - name: Build wheel
-        run: uv run maturin build --release --target ${{ matrix.target }} --out dist
+        run: uv run maturin build --release --python ${{ matrix.python-version }} --target ${{ matrix.target }} --out dist
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4

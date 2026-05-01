@@ -42,7 +42,7 @@ class TranslationalEquivalence(object):
                 # Non-leaf: pattern is encoded by sub_tecs, so only translators count directly
                 units = len(tec.translators)
                 for sub in tec.sub_tecs:
-                    units += sub._total_encoding_units()
+                    units += _total_encoding_units(sub)
                 return units
             else:
                 # Leaf: pattern points + translators

@@ -14,13 +14,14 @@ if __name__ == "__main__":
     points, note_dict = notes_to_points(song.notes)
     
     # 2. Compress
-    tecs = cosiatec_compress(points, restrict_dpitch_zero=True)
-    # tecs = recursive_cosiatec_compress(points, restrict_dpitch_zero=True, min_pattern_size=2)
+    # tecs = cosiatec_compress(points, restrict_dpitch_zero=True)
+    tecs = recursive_cosiatec_compress_py(points, restrict_dpitch_zero=True, min_pattern_size=2)
     
     # 3. Check results 
     print("Result:")
     for i, tec in enumerate(tecs):
         print('TEC %d' % i)
+        print(tec)
         print(tec.summary(indent=2))
     print()
     

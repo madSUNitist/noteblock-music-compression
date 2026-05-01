@@ -125,7 +125,12 @@ impl TranslationalEquivalence {
     }
 
     pub fn __repr__(&self) -> String {
-        return format!("TEC(pattern={:?}, translators={:?})", self.pattern, self.translators);
+        return format!(
+            "TEC(pattern={:?}, translators={:?}, sub_tecs=[{}])", 
+            self.pattern, 
+            self.translators, 
+            Vec::from_iter(self.sub_tecs.iter().map(|tec| tec.__repr__())).join(", ")
+        );
     }
 
     #[pyo3(signature = (indent=0))]

@@ -1,11 +1,14 @@
 # Changelog
 
-## [0.2.5] - 2026-05-01 - 修修补补
+## [1.0.0] - 2026-05-02 - 告一段落
 
-### Fixed
+### Changed
 
-#### `tec.py/tec.rs`
-- 修复了 `.__repr__` 的 rust 实现和 python 实现不一致的问题
+- 完善文档
+- 完善类型注释
 
-#### `utils.py`
-- 修复了误将 `_total_encoding_units(sub)` 写成 `sub._total_encoding_units()` 导致 `AttributeError` 的问题
+### Future Tasks (To be completed)
+
+- 更多测试
+- 使用 Sweepline 优化 SIATEC
+- 对一致性的再检查

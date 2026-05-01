@@ -1,6 +1,6 @@
 from .tec import TranslationalEquivalence
 from . import Point, warn_python_impl_deco
-from .siatec import build_tecs_from_mtps
+from .cosiatec import cosiatec_compress
 
 from typing import List
 
@@ -9,52 +9,39 @@ from typing import List
     "RecurSIA-COSIATEC is using the Python implementation (slower). "
     "For better performance, consider using the Rust implementation."
 )
-def recursive_cosiatec_compress(dataset: List[Point], 
-                                restrict_dpitch_zero: bool = False,
-                                min_pattern_size: int = 2) -> List[TranslationalEquivalence]:
+def recursive_cosiatec_compress(
+    dataset: List[Point],
+    restrict_dpitch_zero: bool = False,
+    min_pattern_size: int = 2
+) -> List[TranslationalEquivalence]:
     """
     RecurSIA applied to COSIATEC: recursively compress patterns.
-    
+
+    First obtains a standard COSIATEC cover (non‑recursive), then recursively
+    compresses the pattern of each resulting TEC if it is large enough.
+
     Args:
         dataset: input point set
         restrict_dpitch_zero: if True, only allow temporal translation (Δpitch=0)
         min_pattern_size: patterns smaller than this are not recursively compressed
-    
+
     Returns:
-        List of TECs, where each TEC's pattern may have been recursively compressed,
-        stored in TEC.sub_tecs.
-    """    
-    remaining = set(dataset)
-    tec_list = []
-    
-    while remaining:
-        # 1. Find best TEC
-        pts_list = sorted(remaining)
-        all_tecs = build_tecs_from_mtps(pts_list, restrict_dpitch_zero=restrict_dpitch_zero)
-        if not all_tecs:
-            # No pattern found
-            for p in remaining:
-                tec_list.append(TranslationalEquivalence([p], set()))
-            break
-        
-        # 2. Select best TEC
-        best = max(all_tecs, key=lambda tec: (
-            tec.compression_ratio, 
-            tec.compactness(remaining), 
-            len(tec.coverage)
-        ))
-        
-        # 3. Recursion
-        if len(best.pattern) >= min_pattern_size:
-            sub_tecs = recursive_cosiatec_compress(best.pattern, 
-                                          restrict_dpitch_zero=restrict_dpitch_zero,
-                                          min_pattern_size=min_pattern_size)
-            best.sub_tecs = sub_tecs
+        List of TECs, where each TEC's pattern may have been recursively compressed
+        and stored in TEC.sub_tecs.
+    """
+    # 1. Obtain the top‑level COSIATEC cover (without recursion)
+    tecs = cosiatec_compress(dataset, restrict_dpitch_zero=restrict_dpitch_zero)
+
+    # 2. Recursively compress the pattern of each TEC
+    for tec in tecs:
+        if len(tec.pattern) >= min_pattern_size:
+            tec.sub_tecs = recursive_cosiatec_compress(
+                tec.pattern,
+                restrict_dpitch_zero=restrict_dpitch_zero,
+                min_pattern_size=min_pattern_size
+            )
+            tec.pattern.clear()
         else:
-            best.sub_tecs = []
-        
-        tec_list.append(best)
-        # 4. Remove best coverage
-        remaining -= best.coverage
-    
-    return tec_list
+            tec.sub_tecs = []
+
+    return tecs

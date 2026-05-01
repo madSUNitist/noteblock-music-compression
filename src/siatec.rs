@@ -1,15 +1,34 @@
-use pyo3::prelude::*;
 use std::collections::HashSet;
 
 use crate::sia::find_mtps;
 use crate::tec::TranslationalEquivalence;
 
-/// SIATEC algorithm: for each MTP find its TEC (all occurrences).
-/// Returns a list of TECs (one per MTP).
-#[pyfunction]
-pub fn build_tecs_from_mtps(dataset: Vec<(u32, u32)>, restrict_dpitch_zero: bool) -> Vec<TranslationalEquivalence> {
+/// Builds translational equivalence classes (TECs) for every maximal translatable pattern (MTP)
+/// found in the dataset by the SIA algorithm.
+///
+/// For each MTP (represented by a translation vector `v` and its pattern `P`), this function
+/// determines all translation vectors `w` such that `P + w` is entirely contained in the dataset.
+/// These `w`s become the TEC's translator set. The TEC is then stored as `⟨P, translators⟩`.
+///
+/// # Arguments
+/// * `dataset` - A reference to the vector of points `(tick, pitch)`.
+/// * `restrict_dpitch_zero` - If `true`, only translation vectors with zero pitch difference
+///   are accepted (purely temporal shifts).
+///
+/// # Returns
+/// A vector of `TranslationalEquivalence` objects, one per distinct MTP (i.e., per non‑zero
+/// translation vector `v`). Patterns that have no translators (other than the trivial zero vector)
+/// are omitted.
+///
+/// # Algorithmic notes
+/// - For each MTP pattern `P`, the candidate translators are all vectors from the first pattern
+///   point `p0` to any point in the dataset. Only those that map the whole `P` into the dataset
+///   are kept.
+/// - Complexity: `O(m · n)` where `m` is the number of MTPs and `n` is the dataset size.
+///   In the worst case `m = O(n²)`.
+pub fn build_tecs_from_mtps(dataset: &Vec<(u32, u32)>, restrict_dpitch_zero: bool) -> Vec<TranslationalEquivalence> {
     // Store dataset as i64 HashSet for easy containment checks
-    let points_set: HashSet<(i64, i64)> = dataset.iter().map(|&(x, y)| (x as i64, y as i64)).collect();
+    let points_set: HashSet<(u32, u32)> = dataset.iter().copied().collect();
     let mtps = find_mtps(dataset, restrict_dpitch_zero); // returns Vec<((i32,i32), Vec<(u32,u32)>)>
     let mut tecs = Vec::new();
 
@@ -27,7 +46,7 @@ pub fn build_tecs_from_mtps(dataset: Vec<(u32, u32)>, restrict_dpitch_zero: bool
         // Collect all candidate translation vectors w = q - p0  (signed differences)
         let candidates: HashSet<(i32, i32)> = points_set
             .iter()
-            .map(|&(qx, qy)| ((qx - p0.0 as i64) as i32, (qy - p0.1 as i64) as i32))
+            .map(|&(qx, qy)| ((qx as i64 - p0.0 as i64) as i32, (qy as i64 - p0.1 as i64) as i32))
             .collect();
 
         let mut translators = HashSet::<(i32, i32)>::new();
@@ -40,8 +59,8 @@ pub fn build_tecs_from_mtps(dataset: Vec<(u32, u32)>, restrict_dpitch_zero: bool
             }
             // Check if pattern + w is fully contained in dataset
             let ok = pattern.iter().all(|&(px, py)| {
-                let tx = px as i64 + w.0 as i64;
-                let ty = py as i64 + w.1 as i64;
+                let tx = (px as i32 + w.0) as u32;
+                let ty = (py as i32 + w.1) as u32;
                 points_set.contains(&(tx, ty))
             });
             if ok {

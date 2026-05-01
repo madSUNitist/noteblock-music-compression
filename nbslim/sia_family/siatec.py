@@ -1,8 +1,8 @@
-from .sia import find_mtps
 from .tec import TranslationalEquivalence
 from . import Point, warn_python_impl_deco
+from .sia import find_mtps
 
-from typing import List, Set
+from typing import List
 
 
 @warn_python_impl_deco(

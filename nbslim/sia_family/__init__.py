@@ -36,11 +36,12 @@ _rust_available = False
 
 try:
     from ._core import (
-        find_mtps,
-        build_tecs_from_mtps,
+        find_mtps, 
+        build_tecs_from_mtps, 
         cosiatec_compress,
         recursive_cosiatec_compress,
-        TranslationalEquivalence, is_better_tec
+        
+        TranslationalEquivalence
     )
     _rust_available = True
     print("[sia_family] Using Rust-accelerated implementations (via _core).")
@@ -51,10 +52,11 @@ except ImportError as e:
     from .siatec import build_tecs_from_mtps
     from .cosiatec import cosiatec_compress
     from .recursia import recursive_cosiatec_compress
-    from .tec import TranslationalEquivalence, is_better_tec
+    from .tec import TranslationalEquivalence
+
     _rust_available = False
 
-# Optionally log more details
+# Log more details
 if _rust_available:
     logger.info("Rust extension loaded successfully.")
 
@@ -62,16 +64,20 @@ from .sia import find_mtps as find_mtps_py
 from .siatec import build_tecs_from_mtps as build_tecs_from_mtps_py
 from .cosiatec import cosiatec_compress as cosiatec_compress_py
 from .recursia import recursive_cosiatec_compress as recursive_cosiatec_compress_py
-from .tec import TranslationalEquivalence as TranslationalEquivalence_py, is_better_tec as is_better_tec_py
+
+from .tec import TranslationalEquivalence as TranslationalEquivalence_py
 
 # Expose public API
 __all__ = [
     "Point",
     "Vector",
+    
     "find_mtps", "find_mtps_py", 
     "build_tecs_from_mtps", "build_tecs_from_mtps_py", 
-    "cosiatec_compress", "cosiatec_compress_py", 
-    "recursive_cosiatec_compress", "recursive_cosiatec_compress_py",  
-    "is_better_tec", "is_better_tec_py", 
-    "TranslationalEquivalence", "TranslationalEquivalence_py"
+    "cosiatec_compress", "cosiatec_compress_py",
+    "recursive_cosiatec_compress", "recursive_cosiatec_compress_py",     
+    
+    "TranslationalEquivalence", "TranslationalEquivalence_py", 
+
+    "_rust_available"
 ]

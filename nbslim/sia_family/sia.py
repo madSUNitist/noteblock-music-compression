@@ -12,7 +12,7 @@ def find_mtps(dataset: List[Point], restrict_dpitch_zero: bool = False) -> Dict[
     Returns a dict: vector -> list of points that are the MTP (starting points).
     The MTP for vector v is { p in dataset | p+v in dataset }.
     """
-    points = list(dataset)          # no sorting, just a copy
+    points = list(dataset)
     n = len(points)
 
     # Use a dictionary to group start points by vector online
@@ -20,7 +20,7 @@ def find_mtps(dataset: List[Point], restrict_dpitch_zero: bool = False) -> Dict[
 
     for i in range(n):
         ti, pi = points[i]
-        for j in range(n):
+        for j in range(i):
             if i == j:
                 continue
             tj, pj = points[j]
@@ -29,6 +29,7 @@ def find_mtps(dataset: List[Point], restrict_dpitch_zero: bool = False) -> Dict[
             if restrict_dpitch_zero and dy != 0:
                 continue
             groups[(dx, dy)].add((tj, pj))
+            groups[(-dx, -dy)].add((ti, pi))
 
     # Build result: filter out zero vector and groups with fewer than 2 points
     mtps = {}

@@ -1,8 +1,8 @@
-from .tec import TranslationalEquivalence
+from .tec import TranslationalEquivalence, tec_sort_key
 from . import Point, warn_python_impl_deco
 from .siatec import build_tecs_from_mtps
 
-from typing import List, Tuple
+from typing import List
 
 
 @warn_python_impl_deco(
@@ -25,7 +25,7 @@ def cosiatec_compress(dataset: List[Point], restrict_dpitch_zero: bool = False) 
                 tec_list.append(TranslationalEquivalence([p], set()))
             break
         # select best TEC
-        best = max(all_tecs, key=lambda tec: (tec.compression_ratio, tec.compactness(remaining), len(tec.coverage)))
+        best = min(all_tecs, key=lambda tec: tec_sort_key(tec, remaining)) # XXX: `remaining`` OR `dataset`? 
         tec_list.append(best)
         # remove covered points
         remaining -= best.coverage

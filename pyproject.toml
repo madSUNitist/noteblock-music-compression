@@ -21,4 +21,4 @@ default = true
 [tool.maturin]
 python-source = "."
 module-name = "nbslim.sia_family._core"
-include = ["./nbslim/**/*.pyi"]
+include = ["nbslim/**/*.pyi"]

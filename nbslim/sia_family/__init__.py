@@ -1,4 +1,26 @@
-from typing import Tuple, Optional
+"""
+SIA Family: pattern discovery and compression algorithms for 2D point sets.
+
+This package implements SIA (Structure Induction Algorithm), SIATEC,
+COSIATEC, and RecurSIA algorithms for finding translational repeated patterns.
+It is optimized for NBS (Note Block Studio) music data but works on any
+set of 2D integer points.
+
+The module automatically tries to import a Rust-accelerated _core module.
+If that fails, it falls back to pure Python implementations 
+(all functions with a `_py` suffix are also exposed for testing).
+
+Public API:
+    - Point, Vector: type aliases for (int, int) tuples.
+    - find_mtps / find_mtps_py: SIA algorithm.
+    - build_tecs_from_mtps / build_tecs_from_mtps_py: SIATEC algorithm.
+    - cosiatec_compress / cosiatec_compress_py: COSIATEC greedy compression.
+    - recursive_cosiatec_compress / recursive_cosiatec_compress_py: Recursive COSIATEC.
+    - TranslationalEquivalence / TranslationalEquivalence_py: TEC class.
+    - _rust_available: bool indicating whether Rust extension is loaded.
+"""
+
+from typing import Tuple, Optional, Union
 
 import logging
 

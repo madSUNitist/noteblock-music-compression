@@ -10,6 +10,7 @@ use crate::tec::TranslationalEquivalence;
 
 /// Python wrapper for `find_mtps` (SIA algorithm).
 #[pyfunction]
+#[pyo3(signature = (dataset, restrict_dpitch_zero=false))]
 pub fn find_mtps(
     dataset: Vec<(u32, u32)>,
     restrict_dpitch_zero: bool,
@@ -19,6 +20,7 @@ pub fn find_mtps(
 
 /// Python wrapper for `build_tecs_from_mtps` (SIATEC algorithm).
 #[pyfunction]
+#[pyo3(signature = (dataset, restrict_dpitch_zero=false))]
 pub fn build_tecs_from_mtps(
     dataset: Vec<(u32, u32)>,
     restrict_dpitch_zero: bool,
@@ -28,6 +30,7 @@ pub fn build_tecs_from_mtps(
 
 /// Python wrapper for `cosiatec_compress` (COSIATEC algorithm).
 #[pyfunction]
+#[pyo3(signature = (dataset, restrict_dpitch_zero=false))]
 pub fn cosiatec_compress(
     dataset: Vec<(u32, u32)>,
     restrict_dpitch_zero: bool,
@@ -37,6 +40,7 @@ pub fn cosiatec_compress(
 
 /// Python wrapper for `recursive_cosiatec_compress` (RECURSIA on COSIATEC).
 #[pyfunction]
+#[pyo3(signature = (dataset, restrict_dpitch_zero=false, min_pattern_size=2))]
 pub fn recursive_cosiatec_compress(
     dataset: Vec<(u32, u32)>,
     restrict_dpitch_zero: bool,

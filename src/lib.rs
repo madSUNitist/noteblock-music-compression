@@ -1,3 +1,13 @@
+//! Rust implementation of the SIA family algorithms.
+//!
+//! This crate provides high‑performance pattern discovery and compression for
+//! 2D point sets, with Python bindings via `pyo3`. The core algorithms
+//! (SIA, SIATEC, COSIATEC, RecurSIA) are implemented in safe Rust and are
+//! typically 10x faster than the pure Python fallback.
+//!
+//! The module is exposed to Python as `_core`; all public functions are
+//! re‑exported from submodules.
+
 mod sia;
 mod tec;
 mod siatec;

@@ -207,6 +207,11 @@ impl fmt::Display for TranslationalEquivalence {
 ///
 /// This struct is used with `sort_by_key` and `min_by_key` to select optimal TECs
 /// in algorithms like `COSIATEC` and `SIATECCompress`.
+///
+/// # Implementation note
+/// Because `f64` does not implement `Eq`, we store the key fields and implement
+/// `Ord` manually using `partial_cmp` (which here always returns `Some` because
+/// all fields are finite). Fields that should be sorted descending are negated.
 pub struct SortKey {
     cr: f64,      // f64 do not implement `Eq`
     comp: f64,    // f64 do not implement `Eq`
@@ -270,6 +275,7 @@ impl Ord for SortKey {
 }
 
 /// Constructs a `SortKey` for a given TEC with respect to a dataset.
+///
 /// The key follows the ISBETTERTEC multi‑level comparison rules and can be used
 /// to sort TECs from best to worst.
 ///
@@ -279,6 +285,10 @@ impl Ord for SortKey {
 ///
 /// # Returns
 /// A `SortKey` where lower key indicates a better TEC.
+///
+/// # Panics
+/// Panics if `tec.pattern` is empty (which should not happen for a valid TEC) or
+/// if the pattern has no width/height (then width/area are zero – still fine).
 pub fn tec_sort_key(tec: &TranslationalEquivalence, dataset_points: &HashSet<(u32, u32)>) -> SortKey {
     let cr = tec.compression_ratio();
     let comp = tec.compactness_impl(dataset_points);

@@ -1,16 +1,28 @@
-from .sia_family.tec import TranslationalEquivalence
+from .sia_family import TranslationalEquivalence
 
 from collections import defaultdict
 
 import pynbs
 
-from typing import List, Tuple, Callable, Set
+from typing import List, Tuple, Callable, Set, Sequence
 
 
 PITCH_BITS = 14
 OFFSET = 1200
 
 def notes_to_points(notes: List[pynbs.Note]) -> Tuple[List[Tuple[int, int]], defaultdict[Tuple[int, int], List[pynbs.Note]]]:
+    """
+    Utility functions for converting between NBS notes and points,
+    rebuilding NBS files from TECs, merging small TECs, and computing
+    compression statistics.
+
+    The encoding scheme used in `notes_to_points`:
+    - tick: the timestamp (integer, can be large).
+    - pitch_cents = note.key * 100 + note.pitch
+    - pitch_off = pitch_cents + OFFSET (OFFSET = 1200)
+    - encoded_y = (instrument << PITCH_BITS) | pitch_off
+    where PITCH_BITS = 14 ensures enough bits to store pitch offset.
+    """
     points = []
     mapping = defaultdict(list)
 
@@ -26,21 +38,26 @@ def notes_to_points(notes: List[pynbs.Note]) -> Tuple[List[Tuple[int, int]], def
     return points, mapping
 
 def merge_tecs(
-    tecs: List[TranslationalEquivalence],
+    tecs: Sequence[TranslationalEquivalence],
     filter: Callable[[TranslationalEquivalence], bool] = lambda tec: len(tec.coverage) <= 10
-) -> List[TranslationalEquivalence]:
+) -> Sequence[TranslationalEquivalence]:
     """
-    Merge all TECs that satisfy the filter into a single TEC containing all their coverage points.
-    
-    The merged TEC has no translators (i.e., it is not a true TEC) and is used only for
-    reconstruction. It helps avoid many tiny TECs that would each occupy a small layer block.
-    
+    Merge all TECs satisfying `filter` into a single "miscellaneous" TEC.
+
+    The merged TEC has:
+    - pattern = union of all coverage points of the filtered TECs (sorted).
+    - translators = empty set (it is not a true TEC, but a holder for notes).
+    This reduces the number of layer blocks when there are many very small patterns.
+
     Args:
-        tecs: List of TECs.
-        filter: A callable that returns True for TECs that should be merged (default: coverage size <= 10).
-        
+        tecs: Original list of TECs.
+        filter: Predicate that determines which TECs to merge. Default merges
+            TECs that cover at most 10 points.
+
     Returns:
-        A new list of TECs where all filtered TECs are replaced by a single merged TEC.
+        A new list where all filtered TECs are replaced by a single merged TEC
+        at the end of the list. If no TEC satisfies the filter, the original list
+        is returned unchanged.
     """
     to_merge = []
     to_keep = []
@@ -73,25 +90,28 @@ def merge_tecs(
     return to_keep + [merged_tec]
 
 def tecs_to_nbs(
-    tecs: List[TranslationalEquivalence],
+    tecs: Sequence[TranslationalEquivalence],
     note_dict: defaultdict[Tuple[int, int], List[pynbs.Note]],
     header: dict
 ) -> pynbs.File:
     """
-    Convert TECs to NBS file with layer blocks per TEC.
-    
-    Each TEC gets a contiguous block of layers. The number of layers allocated
-    for a TEC is (max concurrency of its coverage) + 1.
-    
-    If you want to merge many small TECs into one block, call `merge_tecs` first.
-    
+    Reconstruct an NBS file from a list of TECs.
+
+    Layers are allocated as follows:
+    - Each TEC gets a block of consecutive layers.
+    - The block size = (max concurrency within the TEC's coverage) + 1.
+    - The "+1" adds an empty separator layer (optional, reduces seam artifacts).
+    Notes from the same tick within a TEC are assigned to different layers
+    to avoid collisions (polyphony support).
+
     Args:
-        tecs: List of TECs (already merged if desired).
-        note_dict: Mapping from (tick, encoded_pitch) to list of original Note objects.
-        header: Original NBS header (as a dict) to reuse song metadata.
-        
+        tecs: List of TECs (already merged if desired). The order determines layer order.
+        note_dict: Mapping from (tick, encoded_pitch) to the original Note objects.
+            This is required because the TEC only stores coordinates, not instrument/volume etc.
+        header: Original NBS header dictionary (e.g., `song.header.__dict__`).
+
     Returns:
-        A pynbs.File object with notes placed in appropriate layers.
+        A pynbs.File object with all notes placed in the computed layers.
     """
     # All TECs are treated as multi_tecs (no special single‑point handling)
     multi_tecs = tecs
@@ -149,7 +169,7 @@ def tecs_to_nbs(
     return new_file
 
 
-def compression_stats(tecs: List[TranslationalEquivalence], original_points: List[Tuple[int, int]]) -> dict:
+def compression_stats(tecs: Sequence[TranslationalEquivalence], original_points: List[Tuple[int, int]]) -> dict:
     """
     Calculate compression statistics for a list of TECs.
 
@@ -159,9 +179,9 @@ def compression_stats(tecs: List[TranslationalEquivalence], original_points: Lis
 
     Returns:
         A dictionary with keys:
-            - 'original_count': number of original points
-            - 'encoded_units': total number of units after compression
-            - 'compression_ratio': original_count / encoded_units
+        - 'original_count': number of original points
+        - 'encoded_units': total number of units after compression
+        - 'compression_ratio': original_count / encoded_units
     """
     def _count_units(tec_list):
         units = 0

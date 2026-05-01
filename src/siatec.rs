@@ -26,6 +26,10 @@ use crate::tec::TranslationalEquivalence;
 ///   are kept.
 /// - Complexity: `O(m · n)` where `m` is the number of MTPs and `n` is the dataset size.
 ///   In the worst case `m = O(n²)`.
+///
+/// # Panics
+/// This function panics if any arithmetic operation overflows when converting between
+/// `i32` and `u32` (unlikely for realistic tick/pitch values).
 pub fn build_tecs_from_mtps(dataset: &Vec<(u32, u32)>, restrict_dpitch_zero: bool) -> Vec<TranslationalEquivalence> {
     // Store dataset as i64 HashSet for easy containment checks
     let points_set: HashSet<(u32, u32)> = dataset.iter().copied().collect();

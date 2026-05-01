@@ -15,7 +15,7 @@ if __name__ == "__main__":
     
     # 2. Compress
     # tecs = cosiatec_compress(points, restrict_dpitch_zero=True)
-    tecs = recursive_cosiatec_compress_py(points, restrict_dpitch_zero=True, min_pattern_size=2)
+    tecs = recursive_cosiatec_compress(points, restrict_dpitch_zero=True, min_pattern_size=2)
     
     # 3. Check results 
     print("Result:")

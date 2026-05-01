@@ -2,17 +2,34 @@ from .tec import TranslationalEquivalence
 from . import Point, warn_python_impl_deco
 from .sia import find_mtps
 
-from typing import List
+from typing import List, Sequence
 
 
 @warn_python_impl_deco(
     "SIATEC algorithm: using Python implementation (slower). "
     "For better performance, consider using the Rust implementation."
 )
-def build_tecs_from_mtps(dataset: List[Point], restrict_dpitch_zero: bool = False) -> List[TranslationalEquivalence]:
+def build_tecs_from_mtps(dataset: List[Point], restrict_dpitch_zero: bool = False) -> Sequence[TranslationalEquivalence]:
     """
-    SIATEC algorithm: for each MTP find its TEC (all occurrences).
-    Returns a list of TECs (one per MTP).
+    SIATEC: build Translational Equivalence Classes (TECs) from MTPs.
+
+    For each MTP found by :func:`find_mtps` (vector v, pattern P), this function
+    determines all translation vectors w such that P + w ⊆ dataset. Those w become
+    the TEC's translators. The TEC is then ⟨P, translators⟩.
+
+    Args:
+        dataset: The point set (should be the same as used for find_mtps).
+        restrict_dpitch_zero: If True, only translation vectors with zero pitch
+            difference are accepted (preserves horizontal-only patterns).
+
+    Returns:
+        A list of TECs, one per distinct non‑zero MTP that has at least one translator.
+        The list order is not guaranteed to be stable.
+
+    Algorithmic detail:
+        For each pattern P, candidate translators are all vectors from the first point
+        of P to any point in the dataset. The set is then filtered by checking
+        membership of all translated pattern points.
     """
     points = set(dataset)
     mtps = find_mtps(dataset, restrict_dpitch_zero=restrict_dpitch_zero)  # vector -> list of starting points

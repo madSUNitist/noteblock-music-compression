@@ -50,7 +50,11 @@ pub fn build_tecs_from_mtps(dataset: &Vec<(u32, u32)>, restrict_dpitch_zero: boo
         // Collect all candidate translation vectors w = q - p0  (signed differences)
         let candidates: HashSet<(i32, i32)> = points_set
             .iter()
-            .map(|&(qx, qy)| ((qx as i64 - p0.0 as i64) as i32, (qy as i64 - p0.1 as i64) as i32))
+            .map(|&(qx, qy)| {
+                let dx = (qx as i32).wrapping_sub(p0.0 as i32);
+                let dy = (qy as i32).wrapping_sub(p0.1 as i32);
+                (dx, dy)
+            })
             .collect();
 
         let mut translators = HashSet::<(i32, i32)>::new();

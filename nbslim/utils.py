@@ -2,7 +2,7 @@ from .sia_family import TranslationalEquivalence
 
 from collections import defaultdict
 
-import pynbs
+import pynbs # type: ignore[import-not-found]
 
 from typing import List, Tuple, Callable, Set, Sequence
 

@@ -7,7 +7,7 @@ from nbslim.utils import notes_to_points, tecs_to_nbs, compression_stats, merge_
 import pynbs
 
 if __name__ == "__main__":
-    nbs_file_path = 'nbs_files/青石巷.nbs'
+    nbs_file_path = 'nbs_files/STAY.nbs'
 
     # 1. Read `.nbs` file & convert into `Point` & get mapping dict
     song = pynbs.read(nbs_file_path)

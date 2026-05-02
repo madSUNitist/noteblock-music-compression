@@ -19,7 +19,9 @@ SIA、SIATEC、COSIATEC、RecurSIA 等核心算法均使用 Rust 语言重写，
 
 **关键优化**：SIA 算法从存储 $O(n^2)$ 个点对优化为 **在线 HashMap 聚合分组**，解决了大规模 NBS 文件的内存爆炸问题。
 
-由于 SIA 模式表示的非唯一性与哈希迭代不确定性，Python 与 Rust 的运行结果可能略有不同（偶尔相差 1 TEC），这将在将来得到修复。
+**Sweepline 加速**：在 SIATEC 阶段，可以通过 `sweepline_optimization=True`（默认开启）启用基于 sweepline 的精确匹配算法，对大规模数据集进一步提速。
+
+> 由于 SIA 模式表示的非唯一性与哈希迭代不确定性，Python 与 Rust 的运行结果可能略有不同（偶尔相差 1 TEC），这将在将来得到修复。
 
 ## 核心算法
 
@@ -31,7 +33,7 @@ COSIATEC（Compression SIATEC）是一种基于贪心策略的无损压缩算法
 
 RecurSIA 在 COSIATEC 的基础上引入了递归思想。它会对每个 TEC 的基模式（pattern）再次递归地应用相同的压缩流程，从而发现嵌套在模式内部的子模式重复。这使得 RecurSIA 能够捕捉到更深层次的音乐结构（例如乐句中包含的小动机），从而获得比 COSIATEC 更高的压缩率。递归深度可通过 `min_pattern_size` 参数控制，以平衡压缩效果与计算开销。
 
-## Requirements
+## 环境要求
 
 ```plaintext
 pynbs>=1.1.0
@@ -41,7 +43,7 @@ pynbs>=1.1.0
 - rust 1.95.0+
 - `maturin>=1.13,<2.0`
 
-## Quick Start
+## 快速开始
 
 使用 `pip` 安装：
 ```pwsh
@@ -73,7 +75,8 @@ points, note_dict = notes_to_points(song.notes)
 ```python
 from nbslim.sia_family import cosiatec_compress
 
-tecs = cosiatec_compress(points, restrict_dpitch_zero=True)
+# sweepline_optimization=True 默认开启，可获得更快的运行速度
+tecs = cosiatec_compress(points, restrict_dpitch_zero=True, sweepline_optimization=True)
 ```
 
 #### RecurSIA
@@ -81,7 +84,7 @@ tecs = cosiatec_compress(points, restrict_dpitch_zero=True)
 ```python
 from nbslim.sia_family import recursive_cosiatec_compress
 
-tecs = recursive_cosiatec_compress(points, restrict_dpitch_zero=True, min_pattern_size=2)
+tecs = recursive_cosiatec_compress(points, restrict_dpitch_zero=True, min_pattern_size=2, sweepline_optimization=True)
 ```
 
 ### 查看压缩结果
@@ -113,7 +116,7 @@ new_file.save('.'.join(nbs_file_path.split('.')[:-1]) + '_rebuild.nbs')
 
 `tecs_to_nbs` 会自动处理层数分配和 `song_layers` 设置，无需手动干预。
 
-## 从源码构建 rust 扩展
+## 从源码构建 Rust 扩展
 
 ```pwsh
 git clone git@github.com:madSUNitist/NBSlim.git
@@ -131,8 +134,10 @@ uv run maturin develop --release
 |--------|------|
 | `find_mtps(dataset, restrict_dpitch_zero)` | SIA 算法，返回所有最大可平移模式（向量 → 起始点列表） |
 | `build_tecs_from_mtps(dataset, restrict_dpitch_zero)` | SIATEC 算法，从 MTP 构建平移等价类列表 |
-| `cosiatec_compress(dataset, restrict_dpitch_zero)` | COSIATEC 贪心压缩，返回覆盖数据集的 TEC 列表 |
-| `recursive_cosiatec_compress(dataset, restrict_dpitch_zero, min_pattern_size)` | RecurSIA 递归压缩，支持嵌套模式 |
+| `cosiatec_compress(dataset, restrict_dpitch_zero, sweepline_optimization)` | COSIATEC 贪心压缩，返回覆盖数据集的 TEC 列表 |
+| `recursive_cosiatec_compress(dataset, restrict_dpitch_zero, min_pattern_size, sweepline_optimization)` | RecurSIA 递归压缩，支持嵌套模式 |
+
+> 所有函数均提供纯 Python 后备实现（以 `_py` 后缀命名），当 Rust 扩展不可用时自动使用。可通过 `_rust_available` 标志检查是否成功加载 Rust 扩展。
 
 ### 类
 
@@ -154,11 +159,7 @@ uv run maturin develop --release
 | `merge_tecs(tecs, filter)` | 合并所有满足 `filter` 的小 TEC 为一个杂项 TEC（默认 filter 为 `lambda tec: len(tec.coverage) <= 10`） |
 | `compression_stats(tecs, original_points)` | 计算压缩统计信息，返回包含 `original_count`、`encoded_units` 和 `compression_ratio` 的字典 |
 
-### 纯 python 后备版本
-
-所有函数均提供纯 Python 实现，以 `_py` 后缀命名（如 `find_mtps_py`），当 Rust 扩展不可用时自动使用。
-
-## Reference
+## 参考文献
 
 1. Meredith, D., Lemström, K., & Wiggins, G. A. (2002). Algorithms for discovering repeated patterns in multidimensional representations of polyphonic music.
 2. Meredith, D. (2013). COSIATEC and SIATECCompress: Pattern discovery by geometric compression.

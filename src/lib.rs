@@ -8,11 +8,13 @@
 //! The module is exposed to Python as `_core`; all public functions are
 //! re‑exported from submodules.
 
-mod sia;
-mod tec;
-mod siatec;
-mod cosiatec;
-mod recursia;
+pub mod sia;
+pub mod tec;
+pub mod siatec;
+pub mod cosiatec;
+pub mod recursia;
+
+pub mod sweepline;
 
 mod wrapper;
 
@@ -21,7 +23,9 @@ use wrapper::{
     find_mtps, 
     build_tecs_from_mtps, 
     cosiatec_compress, 
-    recursive_cosiatec_compress
+    recursive_cosiatec_compress, 
+
+    build_tecs_from_mtps_sweepline, 
 };
 
 #[pymodule]
@@ -31,6 +35,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(cosiatec_compress, m)?)?;
     m.add_function(wrap_pyfunction!(recursive_cosiatec_compress, m)?)?;
     
+    m.add_function(wrap_pyfunction!(build_tecs_from_mtps_sweepline, m)?)?;
+
     m.add_class::<tec::TranslationalEquivalence>()?;
     
     Ok(())

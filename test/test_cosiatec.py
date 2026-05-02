@@ -13,16 +13,17 @@ def test_cosiatec_compress_rust(nbs_file_and_points):
     orig_set = set(points)
     orig_count = len(points)
     for restrict in (False, True):
-        tecs = cosiatec_compress(points, restrict)
-        # Union of coverage of all TECs
-        cov = set()
-        for tec in tecs:
-            cov.update(tec.coverage)
-        assert cov == orig_set, f"Lossy: {path}"
-        # Overall compression ratio = original points / total encoding units
-        total_units = sum(_total_encoding_units(tec) for tec in tecs)
-        ratio = orig_count / total_units if total_units > 0 else 0.0
-        assert ratio >= 1.0
+        for sweepline_optimization in (False, True):
+            tecs = cosiatec_compress(points, restrict, sweepline_optimization)
+            # Union of coverage of all TECs
+            cov = set()
+            for tec in tecs:
+                cov.update(tec.coverage)
+            assert cov == orig_set, f"Lossy: {path}"
+            # Overall compression ratio = original points / total encoding units
+            total_units = sum(_total_encoding_units(tec) for tec in tecs)
+            ratio = orig_count / total_units if total_units > 0 else 0.0
+            assert ratio >= 1.0
 
 @pytest.mark.skipif(not NBS_DIR.exists(), reason="nbs_files directory not found")
 def test_cosiatec_compress_python(nbs_file_and_points):

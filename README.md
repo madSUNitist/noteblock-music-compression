@@ -17,9 +17,11 @@ By discovering and compressing repetitive patterns in music, it significantly re
 
 Core algorithms such as SIA, SIATEC, COSIATEC, and RecurSIA are re-implemented in Rust, achieving approximately **10x** speedup, and provide Python bindings via a **native Rust interface + lightweight wrapper**. At runtime, it first tries to use the precompiled Rust implementation; if unavailable, it falls back to the Python implementation.
 
-**Key optimisation**: The SIA algorithm is optimised from storing $O(n^2)$ point pairs to **online HashMap aggregation**, solving memory explosion issues for large NBS files.
+**Key optimisation**: The SIA algorithm is optimised from storing O(n²) point pairs to **online HashMap aggregation**, solving memory explosion issues for large NBS files.
 
-Due to the non-uniqueness of pattern representation in SIA and non-determinism of hash iteration, results from Python and Rust may occasionally differ (occasionally by 1 TEC). This will be fixed in the future.
+**Sweepline acceleration**: In the SIATEC phase, you can enable `sweepline_optimization=True` (enabled by default) to use a sweepline‑based exact matching algorithm, providing further speedups for large datasets.
+
+> Due to the non‑uniqueness of pattern representation in SIA and non‑determinism of hash iteration, results from Python and Rust may occasionally differ by one TEC. This will be fixed in the future.
 
 ## Core Algorithms
 
@@ -73,7 +75,8 @@ Here `note_dict` stores the multiset mapping from `(tick, pitch)` to notes, used
 ```python
 from nbslim.sia_family import cosiatec_compress
 
-tecs = cosiatec_compress(points, restrict_dpitch_zero=True)
+# sweepline_optimization=True is enabled by default for faster execution
+tecs = cosiatec_compress(points, restrict_dpitch_zero=True, sweepline_optimization=True)
 ```
 
 #### RecurSIA
@@ -81,7 +84,7 @@ tecs = cosiatec_compress(points, restrict_dpitch_zero=True)
 ```python
 from nbslim.sia_family import recursive_cosiatec_compress
 
-tecs = recursive_cosiatec_compress(points, restrict_dpitch_zero=True, min_pattern_size=2)
+tecs = recursive_cosiatec_compress(points, restrict_dpitch_zero=True, min_pattern_size=2, sweepline_optimization=True)
 ```
 
 ### View compression results
@@ -131,8 +134,10 @@ uv run maturin develop --release
 |----------|-------------|
 | `find_mtps(dataset, restrict_dpitch_zero)` | SIA algorithm, returns all maximal translatable patterns (vector → list of starting points) |
 | `build_tecs_from_mtps(dataset, restrict_dpitch_zero)` | SIATEC algorithm, builds translational equivalence classes from MTPs |
-| `cosiatec_compress(dataset, restrict_dpitch_zero)` | COSIATEC greedy compression, returns a list of TECs covering the dataset |
-| `recursive_cosiatec_compress(dataset, restrict_dpitch_zero, min_pattern_size)` | RecurSIA recursive compression, supports nested patterns |
+| `cosiatec_compress(dataset, restrict_dpitch_zero, sweepline_optimization)` | COSIATEC greedy compression, returns a list of TECs covering the dataset |
+| `recursive_cosiatec_compress(dataset, restrict_dpitch_zero, min_pattern_size, sweepline_optimization)` | RecurSIA recursive compression, supports nested patterns |
+
+> All functions also have pure Python implementations with a `_py` suffix, used automatically when the Rust extension is unavailable. You can check the `_rust_available` flag to see if the Rust extension was loaded successfully.
 
 ### Class
 
@@ -154,11 +159,7 @@ uv run maturin develop --release
 | `merge_tecs(tecs, filter)` | Merges all small TECs satisfying `filter` into one miscellaneous TEC (default filter: `lambda tec: len(tec.coverage) <= 10`) |
 | `compression_stats(tecs, original_points)` | Computes compression statistics, returns a dict with `original_count`, `encoded_units`, and `compression_ratio` |
 
-### Pure Python fallback
-
-All functions also have pure Python implementations with a `_py` suffix (e.g. `find_mtps_py`), used automatically when the Rust extension is unavailable.
-
-## Reference
+## References
 
 1. Meredith, D., Lemström, K., & Wiggins, G. A. (2002). Algorithms for discovering repeated patterns in multidimensional representations of polyphonic music.
 2. Meredith, D. (2013). COSIATEC and SIATECCompress: Pattern discovery by geometric compression.

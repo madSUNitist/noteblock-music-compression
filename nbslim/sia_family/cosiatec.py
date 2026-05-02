@@ -9,7 +9,11 @@ from typing import List, Sequence
     "COSIATEC is using the Python implementation (slower). "
     "For better performance, consider using the Rust implementation."
 )
-def cosiatec_compress(dataset: List[Point], restrict_dpitch_zero: bool = False) -> Sequence[TranslationalEquivalence]:
+def cosiatec_compress(
+    dataset: List[Point], 
+    restrict_dpitch_zero: bool = False, 
+    sweepline_optimization: bool = True
+) -> Sequence[TranslationalEquivalence]:
     """
     COSIATEC: greedy lossless compression using SIATEC.
 
@@ -25,6 +29,7 @@ def cosiatec_compress(dataset: List[Point], restrict_dpitch_zero: bool = False) 
     Args:
         dataset: Input point set (list of (tick, pitch)).
         restrict_dpitch_zero: Passed to SIATEC; if True, only temporal shifts are allowed.
+        sweepline_optimization: Whether to use the sweepline optimized implementation.
 
     Returns:
         A partition of the input points into TECs, ordered by the greedy selection.

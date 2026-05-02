@@ -1,11 +1,19 @@
 [package]
 name = "sia-family-core"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2024"
 
 [lib]
 name = "_core"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 pyo3 = { version = "0.28.3", features = ["extension-module"] }
+
+[[bench]]
+name = "siatec_benchmark"
+harness = false
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+serde_json = "1.0"

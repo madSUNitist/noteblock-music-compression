@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::siatec::build_tecs_from_mtps;
+use crate::sweepline::build_tecs_from_mtps as build_tecs_from_mtps_sweepline;
 use crate::tec::{TranslationalEquivalence, tec_sort_key};
 
 /// COSIATEC: a greedy, iterative compression algorithm based on translational equivalence classes (TECs).
@@ -17,6 +18,7 @@ use crate::tec::{TranslationalEquivalence, tec_sort_key};
 ///   a copy of this set and does not modify the original data.
 /// * `restrict_dpitch_zero` - If `true`, only translation vectors with zero pitch difference
 ///   are considered (purely temporal shifts). This restricts patterns to horizontal repetition.
+/// * `sweepline_optimization` - Whether to use the sweepline optimized implementation.
 ///
 /// # Returns
 /// A `Vec` of `TranslationalEquivalence` objects that partition the input points (each point
@@ -36,6 +38,7 @@ use crate::tec::{TranslationalEquivalence, tec_sort_key};
 pub fn cosiatec_compress(
     dataset: &Vec<(u32, u32)>,
     restrict_dpitch_zero: bool,
+    sweepline_optimization: bool
 ) -> Vec<TranslationalEquivalence> {
     let mut remaining: HashSet<(u32, u32)> = dataset.iter().copied().collect();
     let mut tec_list = Vec::new();
@@ -45,10 +48,17 @@ pub fn cosiatec_compress(
         let mut pts_list: Vec<(u32, u32)> = remaining.iter().copied().collect();
         pts_list.sort();
         
-        let all_tecs = build_tecs_from_mtps(
-            &pts_list, 
-            restrict_dpitch_zero
-        );
+        let all_tecs = if sweepline_optimization {
+            build_tecs_from_mtps_sweepline(
+                &pts_list, 
+                restrict_dpitch_zero
+            )
+        } else {
+            build_tecs_from_mtps(
+                &pts_list, 
+                restrict_dpitch_zero
+            )
+        };
 
         if all_tecs.is_empty() {
             // no more patterns -> output remaining as trivial TECs (single points)

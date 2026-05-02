@@ -20,7 +20,7 @@ Public API:
     - _rust_available: bool indicating whether Rust extension is loaded.
 """
 
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional
 
 import logging
 
@@ -63,7 +63,9 @@ try:
         cosiatec_compress,
         recursive_cosiatec_compress,
         
-        TranslationalEquivalence
+        build_tecs_from_mtps_sweepline, 
+        
+        TranslationalEquivalence # type: ignore[assignment]
     )
     _rust_available = True
     print("[sia_family] Using Rust-accelerated implementations (via _core).")
@@ -74,7 +76,8 @@ except ImportError as e:
     from .siatec import build_tecs_from_mtps
     from .cosiatec import cosiatec_compress
     from .recursia import recursive_cosiatec_compress
-    from .tec import TranslationalEquivalence
+    
+    from .tec import TranslationalEquivalence # type: ignore[assignment]
 
     _rust_available = False
 
@@ -103,3 +106,6 @@ __all__ = [
 
     "_rust_available"
 ]
+
+if _rust_available:
+    __all__.append("build_tecs_from_mtps_sweepline")
